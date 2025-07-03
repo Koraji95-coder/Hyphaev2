@@ -1,3 +1,6 @@
+import os
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+
 import asyncio
 from db.database import connect_db, close_db, get_db
 

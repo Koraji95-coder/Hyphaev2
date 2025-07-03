@@ -1,3 +1,7 @@
+import os
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+
 import asyncio
 from core.cache.redis_cache import connect_redis, close_redis
 
