@@ -6,6 +6,9 @@ from contextlib import asynccontextmanager
 from core.config.settings import settings
 from core.cache.redis_cache import connect_redis, close_redis
 from db.database import connect_db, close_db
+from core.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from core.routes.health import router as health_router
 from core.routes.auth import router as auth_router
 from core.routes.users import router as users_router
@@ -29,8 +32,12 @@ API_PREFIX = "/api"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    await connect_redis()
-    await connect_db()
+    redis_ok = await connect_redis()
+    db_ok = await connect_db()
+    if not redis_ok:
+        logger.warning("Running without Redis cache")
+    if not db_ok:
+        logger.warning("Database unavailable; some features may not work")
     yield
     # Shutdown
     await close_redis()
