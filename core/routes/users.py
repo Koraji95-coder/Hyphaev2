@@ -1,4 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from db.database import get_db
+from db.models import User
 
 router = APIRouter()
 
@@ -17,5 +21,13 @@ async def update_user(user_id: str, data: dict):
     return updated
 
 @router.delete("/users/{user_id}")
-async def delete_user(user_id: str):
-    return {"status": "deleted", "message": f"User {user_id} removed"}
+async def delete_user(
+    user_id: int, db: AsyncSession = Depends(get_db)
+):
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await db.delete(user)
+    await db.commit()
+    return {"message": f"User {user_id} deleted"}
