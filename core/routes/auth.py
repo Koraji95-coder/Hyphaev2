@@ -136,7 +136,7 @@ async def password_reset_verify(token: str, new_password: str):
 
 @router.post("/auth/resend-verification")
 async def resend_verification(
-    email: str = Body(...),
+    email: str = Body(..., embed=True),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(select(User).where(User.email == email))
