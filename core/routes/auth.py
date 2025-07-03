@@ -2,6 +2,9 @@ from fastapi import APIRouter, Query, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 import bcrypt
+import secrets
+
+from core.config.settings import settings
 
 from core.utils import send_email
 from core.schemas import UserCreate, UserLogin
@@ -25,15 +28,22 @@ async def register_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Username already exists")
 
     hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-    user = User(username=username, email=email, hashed_password=hashed_pw)
+    token = secrets.token_urlsafe()
+    user = User(
+        username=username,
+        email=email,
+        hashed_password=hashed_pw,
+        verification_token=token,
+    )
     db.add(user)
     await db.commit()
     await db.refresh(user)
     if email:
+        verify_link = f"{settings.FRONTEND_URL}/verify-email?token={token}&email={email}"
         await send_email(
             email,
             "Verify your email",
-            f"Hello {username}, please verify your email address.",
+            f"Hello {username}, please verify your email by visiting {verify_link}",
         )
     return {"id": user.id, "username": user.username, "email": user.email}
 
@@ -84,7 +94,19 @@ async def change_pin(old_pin: str, new_pin: str):
     return {"success": True, "message": "pin changed"}
 
 @router.get("/auth/verify_email")
-async def verify_email(token: str = Query(...)):
+async def verify_email(
+    token: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(User).where(User.verification_token == token)
+    )
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Invalid token")
+    user.is_verified = True
+    user.verification_token = None
+    await db.commit()
     return {"message": "Email verified"}
 
 @router.get("/auth/status")
