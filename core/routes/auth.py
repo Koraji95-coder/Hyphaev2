@@ -3,6 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 import bcrypt
 
+from core.utils import send_email
+
 from db.database import get_db
 from db.models import User
 
@@ -26,6 +28,12 @@ async def register_user(data: dict, db: AsyncSession = Depends(get_db)):
     db.add(user)
     await db.commit()
     await db.refresh(user)
+    if email:
+        await send_email(
+            email,
+            "Verify your email",
+            f"Hello {username}, please verify your email address.",
+        )
     return {"id": user.id, "username": user.username, "email": user.email}
 
 @router.post("/auth/login")
@@ -91,6 +99,11 @@ async def admin_only():
 
 @router.post("/auth/password-reset/request")
 async def password_reset_request(email: str):
+    await send_email(
+        email,
+        "Password Reset",
+        "Follow this link to reset your password.",
+    )
     return {"message": "Reset email sent"}
 
 @router.post("/auth/password-reset/verify")
