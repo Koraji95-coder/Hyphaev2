@@ -1,5 +1,5 @@
 import asyncio
-from core.db.database import connect_db, close_db, get_db
+from db.database import connect_db, close_db, get_db
 
 async def main():
     await connect_db()
