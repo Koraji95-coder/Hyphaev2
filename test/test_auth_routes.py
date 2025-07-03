@@ -1,8 +1,13 @@
+import os
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+
 import bcrypt
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from core.routes import auth
+from core.schemas import UserCreate, UserLogin
 from core.utils.email import send_email
 
 
@@ -19,7 +24,8 @@ async def test_register_user_success():
     db.commit = AsyncMock()
 
     with patch('core.routes.auth.send_email', new=AsyncMock()) as mock_send:
-        resp = await auth.register_user({'username': 'alice', 'password': 'secret', 'email': 'alice@example.com'}, db=db)
+        user_in = UserCreate(username='alice', password='secret', email='alice@example.com')
+        resp = await auth.register_user(user_in, db=db)
         assert resp == {'id': 1, 'username': 'alice', 'email': 'alice@example.com'}
         mock_send.assert_awaited_once_with(
             'alice@example.com',
@@ -40,7 +46,8 @@ async def test_login_user_success():
     db = MagicMock()
     db.execute = AsyncMock(return_value=result)
 
-    resp = await auth.login_user({'username': 'alice', 'password': 'secret'}, db=db)
+    creds = UserLogin(username='alice', password='secret')
+    resp = await auth.login_user(creds, db=db)
     assert resp['username'] == 'alice'
     assert resp['role'] == 'user'
     assert resp['token'] == 'fake-token'

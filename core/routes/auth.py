@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import bcrypt
 
 from core.utils import send_email
+from core.schemas import UserCreate, UserLogin
 
 from db.database import get_db
 from db.models import User
@@ -11,10 +12,10 @@ from db.models import User
 router = APIRouter()
 
 @router.post("/auth/register")
-async def register_user(data: dict, db: AsyncSession = Depends(get_db)):
-    username = data.get("username")
-    password = data.get("password")
-    email = data.get("email")
+async def register_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
+    username = data.username
+    password = data.password
+    email = data.email
 
     if not username or not password:
         raise HTTPException(status_code=400, detail="Username and password required")
@@ -37,9 +38,9 @@ async def register_user(data: dict, db: AsyncSession = Depends(get_db)):
     return {"id": user.id, "username": user.username, "email": user.email}
 
 @router.post("/auth/login")
-async def login_user(credentials: dict, db: AsyncSession = Depends(get_db)):
-    username = credentials.get("username")
-    password = credentials.get("password")
+async def login_user(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
+    username = credentials.username
+    password = credentials.password
 
     if not username or not password:
         raise HTTPException(status_code=400, detail="Invalid credentials")
