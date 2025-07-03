@@ -79,3 +79,40 @@ async def test_verify_email_success():
     assert user.is_verified is True
     assert user.verification_token is None
     db.commit.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_resend_verification_unverified():
+    user = MagicMock(username='alice', email='alice@example.com', is_verified=False)
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = user
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=result)
+    db.commit = AsyncMock()
+
+    with patch('core.routes.auth.secrets.token_urlsafe', return_value='tok123'):
+        with patch('core.routes.auth.send_email', new=AsyncMock()) as mock_send:
+            resp = await auth.resend_verification(email='alice@example.com', db=db)
+            assert resp == {'message': 'Verification email resent'}
+            verify_link = (
+                f"http://localhost:5173/verify-email?token=tok123&email=alice@example.com"
+            )
+            mock_send.assert_awaited_once_with(
+                'alice@example.com',
+                'Verify your email',
+                f'Hello alice, please verify your email by visiting {verify_link}'
+            )
+    assert user.verification_token == 'tok123'
+    db.commit.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_resend_verification_already_verified():
+    user = MagicMock(username='bob', email='bob@example.com', is_verified=True)
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = user
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=result)
+
+    resp = await auth.resend_verification(email='bob@example.com', db=db)
+    assert resp == {'message': 'Email already verified'}

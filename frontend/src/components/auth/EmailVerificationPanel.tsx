@@ -75,9 +75,16 @@ const EmailVerificationPanel: React.FC = () => {
     setSending(true);
     setStatus("idle");
     try {
-      await axios.post("/api/auth/resend-verification", { email });
-      setMessage("A new verification link was sent to your email.");
-      setTimer(EMAIL_VERIFY_LIMIT_SEC);
+      const res = await axios.post("/api/auth/resend-verification", { email });
+      const msg = res.data?.message ||
+        "A new verification link was sent to your email.";
+      setMessage(msg);
+      if (msg === "Email already verified") {
+        setStatus("success");
+        setTimeout(() => navigate("/login", { replace: true }), 2000);
+      } else {
+        setTimer(EMAIL_VERIFY_LIMIT_SEC);
+      }
     } catch (err) {
       setMessage("Error resending verification email. Please try again.");
     }

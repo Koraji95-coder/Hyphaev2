@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Depends, HTTPException
+from fastapi import APIRouter, Query, Depends, HTTPException, Body
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 import bcrypt
@@ -132,3 +132,26 @@ async def password_reset_request(email: str):
 @router.post("/auth/password-reset/verify")
 async def password_reset_verify(token: str, new_password: str):
     return {"message": "Password reset successful"}
+
+
+@router.post("/auth/resend-verification")
+async def resend_verification(
+    email: str = Body(...),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.is_verified:
+        return {"message": "Email already verified"}
+    token = secrets.token_urlsafe()
+    user.verification_token = token
+    await db.commit()
+    verify_link = f"{settings.FRONTEND_URL}/verify-email?token={token}&email={email}"
+    await send_email(
+        email,
+        "Verify your email",
+        f"Hello {user.username}, please verify your email by visiting {verify_link}",
+    )
+    return {"message": "Verification email resent"}
