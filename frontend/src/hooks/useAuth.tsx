@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useCallback,
   ReactNode,
+  useRef,
 } from "react";
 import type { User, AuthResult } from "@/services/auth";
 import {
@@ -56,7 +57,10 @@ function useProvideAuth(): AuthContextType {
   const [error,   setError]   = useState<string | null>(null);
 
   // on mount: try to refresh token and fetch profile
+  const initRef = useRef(false);
   useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
     (async () => {
       setLoading(true);
       try {
