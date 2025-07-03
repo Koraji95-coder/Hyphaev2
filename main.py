@@ -7,6 +7,9 @@ from core.cache.redis_cache import connect_redis, close_redis
 from db.database import connect_db, close_db
 from core.routes.health import router as health_router
 
+# Prefix for all API routes
+API_PREFIX = "/api"
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -18,4 +21,7 @@ async def lifespan(app: FastAPI):
     await close_db()
 
 app = FastAPI(lifespan=lifespan)
-app.include_router(health_router)
+
+routers = [health_router]
+for router in routers:
+    app.include_router(router, prefix=API_PREFIX)
