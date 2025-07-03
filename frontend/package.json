@@ -41,6 +41,7 @@
     "@types/react-dom": "^18.0.11",
     "@types/socket.io-client": "^1.4.36",
     "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.21",
     "eslint": "^8.57.1",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.2.0",
