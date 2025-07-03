@@ -1,5 +1,6 @@
 # main.py
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from core.config.settings import settings
@@ -21,6 +22,17 @@ async def lifespan(app: FastAPI):
     await close_db()
 
 app = FastAPI(lifespan=lifespan)
+
+# Allow CORS for the frontend origin
+origins = ["http://localhost:5173"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 routers = [health_router]
 for router in routers:
