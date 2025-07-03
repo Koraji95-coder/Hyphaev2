@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { toast } from "react-toastify";
+import jexl from "jexl";
 
 export interface AlertRule {
   id: string;
@@ -63,10 +64,12 @@ export const useAlertStore = create<AlertStore>((set, get) => ({
           ...data,
         };
 
-        const result = new Function(
-          ...Object.keys(context),
-          `return ${rule.condition}`,
-        )(...Object.values(context));
+        if (typeof rule.condition !== "string" || !rule.condition.trim()) {
+          console.error("Invalid rule condition");
+          return;
+        }
+
+        const result = jexl.evalSync(rule.condition, context);
 
         if (result) {
           const timestamp = new Date().toLocaleTimeString();

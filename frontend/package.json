@@ -19,6 +19,7 @@
     "d3-array": "^3.2.4",
     "date-fns-tz": "^3.2.0",
     "framer-motion": "^12.23.0",
+    "jexl": "^2.3.0",
     "lucide-react": "^0.525.0",
     "postcss": "^8.5.6",
     "react": "^19.1.0",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@eslint/js": "^9.30.1",
     "@types/d3-array": "^3.2.1",
+    "@types/jexl": "^2.3.4",
     "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
