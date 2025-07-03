@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create a single axios instance for all API requests
 export const api = axios.create({
-  baseURL: "/api/routes", // instead of "/api"
+  baseURL: "/api",
   withCredentials: true,
   timeout: 15000
 });
