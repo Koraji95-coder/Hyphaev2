@@ -99,15 +99,18 @@ async def auto_login():
     return {"username": "demo", "role": "user"}
 
 @router.post("/auth/set_pin")
-async def set_pin(pin: str):
+async def set_pin(pin: str = Body(..., embed=True)):
     return {"success": True, "message": "pin set"}
 
 @router.post("/auth/verify_pin")
-async def verify_pin(pin: str):
+async def verify_pin(pin: str = Body(..., embed=True)):
     return {"success": True}
 
 @router.post("/auth/change_pin")
-async def change_pin(old_pin: str, new_pin: str):
+async def change_pin(
+    old_pin: str = Body(..., embed=True),
+    new_pin: str = Body(..., embed=True),
+):
     return {"success": True, "message": "pin changed"}
 
 @router.get("/auth/verify_email")
