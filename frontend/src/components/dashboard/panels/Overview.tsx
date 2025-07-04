@@ -1,15 +1,7 @@
 // src/pages/Overview.tsx
 import React from "react";
 import { motion } from "framer-motion";
-import {
-  Activity,
-  Users,
-  Zap,
-  Clock,
-  ArrowUpRight,
-  Brain,
-  AlertTriangle,
-} from "lucide-react";
+import { Users, Zap, Clock, Brain } from "lucide-react";
 import StatusCard      from "@/components/ui/StatusCard";
 import RecentActivity  from "@/components/widgets/RecentActivity";
 import SystemMetrics   from "@/components/widgets/SystemMetrics";
@@ -41,10 +33,15 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
   };
 
   return (
-    <div className="p-6 lg:p-8 min-h-screen">
+    <div className="w-full h-full overflow-y-auto px-4 py-6 md:px-10 md:py-10">
       {/* Header */}
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="mb-8">
-        <motion.h1 className="text-2xl lg:text-3xl font-bold text-white mb-2" variants={itemVariants}>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="mb-8"
+      >
+        <motion.h1 className="text-2xl md:text-3xl font-bold text-white mb-2" variants={itemVariants}>
           System Overview
         </motion.h1>
         <motion.p className="text-gray-400" variants={itemVariants}>
@@ -53,7 +50,12 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
       </motion.div>
 
       {/* Top cards */}
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+      >
         <StatusCard
           title="Agents Active"
           value={`${systemStatus.activeAgents}/${systemStatus.totalAgents}`}
@@ -93,7 +95,12 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
       </motion.div>
 
       {/* Metrics + Weather */}
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8"
+      >
         <motion.div variants={itemVariants} className="lg:col-span-2">
           <SystemMetrics />
         </motion.div>
@@ -103,8 +110,13 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
       </motion.div>
 
       {/* Activity + Alerts */}
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div variants={itemVariants} className="lg:col-span-1">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+      >
+        <motion.div variants={itemVariants}>
           <RecentActivity />
         </motion.div>
 
@@ -117,7 +129,6 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
               Logout
             </button>
           </div>
-          {/* Alerts panel */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-white">System Alerts</h2>
             <span className={`rounded-full px-2 py-1 text-xs font-medium ${
@@ -129,9 +140,8 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
               {systemStatus.warnings} Warnings
             </span>
           </div>
-          {/* Sample alerts */}
           <div className="space-y-3">
-            {/* ... your individual alert cards here ... */}
+            {/* Add your alert cards or items here */}
           </div>
         </motion.div>
       </motion.div>

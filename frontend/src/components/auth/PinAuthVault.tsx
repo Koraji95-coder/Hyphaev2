@@ -42,6 +42,9 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
   const [error, setError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [terminalLines, setTerminalLines] = useState<string[]>([
+    "🔒 Vault access protocol initiated...",
+  ]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // ESC to close modal
@@ -58,34 +61,54 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
     inputRef.current?.focus();
   }, [pin]);
 
+  // Auto scroll terminal to bottom on new line
+  const terminalRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    terminalRef.current?.scrollTo({ top: terminalRef.current.scrollHeight });
+  }, [terminalLines]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "").slice(0, PIN_LENGTH);
     setPin(value);
     setError("");
-    // Auto-verify when PIN is filled
     if (value.length === PIN_LENGTH) {
       setTimeout(() => {
         handleVerify(value);
-      }, 100); // slight delay for UX smoothness
+      }, 80);
     }
   };
 
-  // Accept PIN as argument for auto-check onChange
   const handleVerify = async (checkPin?: string) => {
     const _pin = checkPin ?? pin;
     if (_pin.length !== PIN_LENGTH) {
       setError(`PIN must be ${PIN_LENGTH} digits`);
+      setTerminalLines((prev) => [
+        ...prev,
+        `❌ Invalid attempt: PIN must be ${PIN_LENGTH} digits.`,
+      ]);
       return;
     }
     setIsVerifying(true);
+    setTerminalLines((prev) => [
+      ...prev,
+      "⏳ Verifying PIN..."
+    ]);
     const success = await verifyPin(_pin);
     if (success) {
       setIsVerified(true);
+      setTerminalLines((prev) => [
+        ...prev,
+        "✅ Access granted! Welcome."
+      ]);
       setTimeout(() => {
         onSuccess();
-      }, 600);
+      }, 900);
     } else {
       setError("Invalid PIN");
+      setTerminalLines((prev) => [
+        ...prev,
+        "❌ Invalid PIN. Please try again."
+      ]);
       setPin("");
       inputRef.current?.focus();
     }
@@ -94,20 +117,23 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
       initial="hidden"
       animate="visible"
       exit="exit"
       variants={containerVariants}
     >
       <ParticleBackground />
-      {/* Backdrop for click-out to close */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onBack} />
+      {/* Click-out to close */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-md"
+        onClick={onBack}
+      />
       <motion.div
-        className="relative w-full max-w-md p-8 rounded-2xl bg-dark-200/80 backdrop-blur-md border border-dark-100/30 shadow-xl z-10"
+        className="relative w-full max-w-md p-8 rounded-2xl bg-dark-300/80 backdrop-blur-xl border border-dark-100/40 shadow-xl z-10 flex flex-col items-center"
         variants={itemVariants}
       >
-        {/* Back Button */}
+        {/* Back/Close Buttons */}
         <motion.button
           onClick={onBack}
           className="absolute top-4 left-4 p-2 rounded-full hover:bg-dark-100/50 transition-colors"
@@ -117,8 +143,6 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
         >
           <ArrowLeft className="w-5 h-5 text-gray-400" />
         </motion.button>
-
-        {/* Close Button */}
         <motion.button
           onClick={onBack}
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-dark-100/50 transition-colors"
@@ -128,8 +152,7 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
         >
           <X className="w-5 h-5 text-gray-400" />
         </motion.button>
-
-        <motion.div className="text-center mb-8" variants={itemVariants}>
+        <motion.div className="text-center mb-6" variants={itemVariants}>
           <div
             className={`inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full ${
               isVerified ? "bg-success-500/20" : "bg-secondary-500/20"
@@ -151,8 +174,7 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
             </span>
           </p>
         </motion.div>
-
-        <motion.div className="mb-6 space-y-4" variants={itemVariants}>
+        <motion.div className="mb-6 space-y-4 w-full" variants={itemVariants}>
           <p className="text-center text-gray-300">Enter your 4-digit security PIN</p>
           <motion.div
             animate={
@@ -166,7 +188,6 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
             className="space-y-4"
           >
             <div className="relative flex flex-col items-center">
-              {/* Visually hidden input, just for keyboard entry */}
               <input
                 ref={inputRef}
                 type="tel"
@@ -180,7 +201,6 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
                 data-testid="pin-input"
                 aria-label="PIN Input"
               />
-              {/* PIN Dots */}
               <div
                 className="flex justify-center gap-4 cursor-pointer"
                 onClick={() => inputRef.current?.focus()}
@@ -199,7 +219,6 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
                 ))}
               </div>
             </div>
-
             {error && (
               <motion.p
                 initial={{ opacity: 0, y: -10 }}
@@ -213,8 +232,7 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
             )}
           </motion.div>
         </motion.div>
-
-        <motion.div className="mt-6" variants={itemVariants}>
+        <motion.div className="mt-2 w-full" variants={itemVariants}>
           <button
             type="button"
             onClick={() => handleVerify()}
@@ -240,6 +258,15 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
             )}
           </button>
         </motion.div>
+        {/* Terminal Log Panel */}
+        <div
+          ref={terminalRef}
+          className="mt-6 w-full bg-black/60 border border-hyphae-800 text-green-300 rounded-lg px-4 py-3 text-xs font-mono max-h-32 min-h-[80px] overflow-y-auto"
+        >
+          {terminalLines.map((line, idx) => (
+            <div key={idx}>{line}</div>
+          ))}
+        </div>
       </motion.div>
     </motion.div>
   );

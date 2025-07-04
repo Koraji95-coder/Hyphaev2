@@ -27,33 +27,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
     settings: <Settings onLogout={onLogout} />,
   };
 
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.4,
-        staggerChildren: 0.1,
-      },
-    },
-    exit: {
-      opacity: 0,
-      transition: { duration: 0.3 },
-    },
-  };
-
   return (
     <motion.div
-      className="relative min-h-screen w-full flex flex-col"
+      className="relative min-h-screen w-full flex flex-col font-mono bg-black"
       initial="hidden"
       animate="visible"
       exit="exit"
-      variants={containerVariants}
     >
       <ParticleBackground variant="minimal" />
-
       <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+        {/* Navigation (sidebar) */}
         <Navigation
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -61,17 +44,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           onLogout={onLogout}
         />
 
-        <main className="flex-1 overflow-y-auto bg-dark-300/30 backdrop-blur-sm">
+        {/* Main Glass Content */}
+        <main className="flex-1 overflow-y-auto flex justify-center items-center bg-dark-300/30 backdrop-blur-2xl">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              className="h-full"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              className="w-full max-w-6xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              {tabComponents[activeTab]}
+              <div className="bg-dark-300/80 backdrop-blur-2xl border border-dark-100/40 shadow-xl rounded-2xl p-8 min-h-[80vh]">
+                {tabComponents[activeTab]}
+              </div>
             </motion.div>
           </AnimatePresence>
         </main>
