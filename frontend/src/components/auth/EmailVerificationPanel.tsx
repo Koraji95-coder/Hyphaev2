@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import type { AxiosError } from "axios";
 
 const EMAIL_VERIFY_LIMIT_SEC = 10 * 60; // 10 minutes
 
@@ -36,12 +37,14 @@ const EmailVerificationPanel: React.FC = () => {
           setMessage(res.data.message || "Email verified! You may now log in.");
           setTimeout(() => navigate("/login", { replace: true }), 2000);
         })
-        .catch(err => {
+        .catch((err: unknown) => {
+          const error = err as AxiosError<{ detail?: string }>;
           setStatus("error");
-          setMessage(
-            err.response?.data?.detail ||
-              "Verification failed. The link may be invalid or expired."
-          );
+          const detail =
+            error.response?.data?.detail ||
+            error.message ||
+            "Verification failed. The link may be invalid or expired.";
+          setMessage(detail);
           setTimer(EMAIL_VERIFY_LIMIT_SEC); // Let user retry/resend
         });
     }
@@ -85,8 +88,13 @@ const EmailVerificationPanel: React.FC = () => {
       } else {
         setTimer(EMAIL_VERIFY_LIMIT_SEC);
       }
-    } catch (err) {
-      setMessage("Error resending verification email. Please try again.");
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ detail?: string }>;
+      const detail =
+        error.response?.data?.detail ||
+        error.message ||
+        "Error resending verification email. Please try again.";
+      setMessage(detail);
     }
     setSending(false);
   };
