@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Depends, HTTPException, Body
+from fastapi import APIRouter, Query, Depends, HTTPException, Body, Header
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 import bcrypt
@@ -67,12 +67,28 @@ async def logout_user():
     return {"status": "logged_out"}
 
 @router.get("/auth/me")
-async def get_profile(db: AsyncSession = Depends(get_db)):
+async def get_profile(
+    authorization: str | None = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    token = authorization.split(" ", 1)[1]
+    if token != "fake-token":
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     result = await db.execute(select(User).limit(1))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"id": user.id, "username": user.username, "email": user.email, "role": "user", "verified": True}
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": "user",
+        "verified": True,
+    }
 
 @router.post("/auth/refresh")
 async def refresh_token():
