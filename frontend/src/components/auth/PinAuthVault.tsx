@@ -1,15 +1,40 @@
-// components/auth/PinAuthVault.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, Variants } from "framer-motion";
 import { ArrowLeft, Shield, ShieldCheck, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ParticleBackground from "../ui/ParticleBackground";
 
-
 interface PinAuthVaultProps {
   onSuccess: () => void;
   onBack: () => void;
 }
+
+const PIN_LENGTH = 4;
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.6,
+      staggerChildren: 0.1,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: 20,
+    transition: { duration: 0.3 },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1.0] },
+  },
+};
 
 const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
   const { verifyPin, user } = useAuth();
@@ -17,9 +42,9 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
   const [error, setError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  const PIN_LENGTH = 4;
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // 🔐 ESC to close modal
+  // ESC to close modal
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onBack();
@@ -28,56 +53,43 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onBack]);
 
+  // Focus input on mount or when pin is cleared
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [pin]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "").slice(0, PIN_LENGTH);
     setPin(value);
     setError("");
+    // Auto-verify when PIN is filled
+    if (value.length === PIN_LENGTH) {
+      setTimeout(() => {
+        handleVerify(value);
+      }, 100); // slight delay for UX smoothness
+    }
   };
 
-  const handleVerify = async () => {
-    if (pin.length !== PIN_LENGTH) {
+  // Accept PIN as argument for auto-check onChange
+  const handleVerify = async (checkPin?: string) => {
+    const _pin = checkPin ?? pin;
+    if (_pin.length !== PIN_LENGTH) {
       setError(`PIN must be ${PIN_LENGTH} digits`);
       return;
     }
-
     setIsVerifying(true);
-    const success = await verifyPin(pin);
+    const success = await verifyPin(_pin);
     if (success) {
       setIsVerified(true);
       setTimeout(() => {
-        onSuccess(); // 🚀 route to dashboard
-      }, 1000);
+        onSuccess();
+      }, 600);
     } else {
       setError("Invalid PIN");
       setPin("");
+      inputRef.current?.focus();
     }
     setIsVerifying(false);
-  };
-
-  // Tell TS “this object is a Variants”
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1,
-      },
-    },
-    exit: {
-      opacity: 0,
-      y: 20,
-      transition: { duration: 0.3 },
-    },
-  };
-
-  const itemVariants: Variants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1.0] },
-    },
   };
 
   return (
@@ -89,30 +101,30 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
       variants={containerVariants}
     >
       <ParticleBackground />
-
-      {/* ✖ Backdrop click closes modal */}
+      {/* Backdrop for click-out to close */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onBack} />
-
       <motion.div
         className="relative w-full max-w-md p-8 rounded-2xl bg-dark-200/80 backdrop-blur-md border border-dark-100/30 shadow-xl z-10"
         variants={itemVariants}
       >
-        {/* 🔙 Back button */}
+        {/* Back Button */}
         <motion.button
           onClick={onBack}
           className="absolute top-4 left-4 p-2 rounded-full hover:bg-dark-100/50 transition-colors"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
+          aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5 text-gray-400" />
         </motion.button>
 
-        {/* ❌ Close button (top-right) */}
+        {/* Close Button */}
         <motion.button
           onClick={onBack}
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-dark-100/50 transition-colors"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
+          aria-label="Close"
         >
           <X className="w-5 h-5 text-gray-400" />
         </motion.button>
@@ -142,7 +154,6 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
 
         <motion.div className="mb-6 space-y-4" variants={itemVariants}>
           <p className="text-center text-gray-300">Enter your 4-digit security PIN</p>
-
           <motion.div
             animate={
               error
@@ -154,32 +165,37 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
             }
             className="space-y-4"
           >
-            <div className="relative">
+            <div className="relative flex flex-col items-center">
+              {/* Visually hidden input, just for keyboard entry */}
               <input
-                type="password"
+                ref={inputRef}
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="off"
                 value={pin}
                 onChange={handleChange}
-                className="w-full px-4 py-3 text-center text-2xl tracking-widest bg-dark-300 border-2 border-hyphae-500/20 rounded-lg focus:border-hyphae-500 focus:outline-none transition-colors"
-                placeholder="• • • •"
-                disabled={isVerifying || isVerified}
+                className="w-1 h-1 opacity-0 absolute pointer-events-none"
+                maxLength={PIN_LENGTH}
                 data-testid="pin-input"
                 aria-label="PIN Input"
               />
-
-              {/* Dot indicators */}
-              <div className="flex justify-center gap-2 mt-4">
+              {/* PIN Dots */}
+              <div
+                className="flex justify-center gap-4 cursor-pointer"
+                onClick={() => inputRef.current?.focus()}
+              >
                 {Array.from({ length: PIN_LENGTH }).map((_, i) => (
-                  <motion.div
+                  <span
                     key={i}
-                    className="w-3 h-3 rounded-full"
-                    initial={{ scale: 0 }}
-                    animate={{
-                      scale: pin[i] ? 1 : 0.5,
-                      backgroundColor: pin[i]
-                        ? "rgb(var(--color-hyphae-500))"
-                        : "rgb(var(--color-dark-400))",
-                    }}
-                  />
+                    className={`w-6 h-6 rounded-full text-3xl border-2 flex items-center justify-center ${
+                      pin[i]
+                        ? "bg-hyphae-500 border-hyphae-500 text-white"
+                        : "bg-dark-400 border-dark-400"
+                    } transition-all`}
+                  >
+                    {pin[i] ? "•" : ""}
+                  </span>
                 ))}
               </div>
             </div>
@@ -201,7 +217,7 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
         <motion.div className="mt-6" variants={itemVariants}>
           <button
             type="button"
-            onClick={handleVerify}
+            onClick={() => handleVerify()}
             disabled={isVerifying || pin.length !== PIN_LENGTH || isVerified}
             className={`w-full py-3 rounded-lg font-medium transition-colors ${
               isVerified
