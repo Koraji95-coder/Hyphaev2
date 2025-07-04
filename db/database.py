@@ -1,6 +1,7 @@
 # database.py
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
+from sqlalchemy import text
 
 from core.config.settings import settings
 from core.utils.logger import get_logger
@@ -37,6 +38,21 @@ async def connect_db(max_retries: int = 3, delay: float = 2.0) -> bool:
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
+                # add new columns for existing tables if needed
+                try:
+                    if engine.dialect.name.startswith("postgres"):
+                        await conn.execute(
+                            text(
+                                "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(128)"
+                            )
+                        )
+                    else:
+                        await conn.execute(
+                            text("ALTER TABLE users ADD COLUMN reset_token VARCHAR(128)")
+                        )
+                except Exception:
+                    # column may already exist or not be alterable; ignore errors
+                    pass
             logger.info("Database connection established")
             return True
         except Exception as exc:
