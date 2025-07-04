@@ -119,7 +119,7 @@ const ChartPanel: React.FC<ChartPanelProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-dark-200 rounded-lg shadow-sm p-6 border border-dark-100/50 text-white">
       {/* Indicator selection UI */}
       <div className="mb-4 flex flex-wrap gap-2">
         {Object.values(indicatorsRegistry).map((ind) => (

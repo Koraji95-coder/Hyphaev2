@@ -12,7 +12,7 @@ interface Props {
 
 export default function NewsPanel({ news, filter, setFilter }: Props) {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-dark-200 rounded-lg shadow-sm p-6 border border-dark-100/50 text-white">
       <div className="flex justify-between mb-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Newspaper /> Market News
