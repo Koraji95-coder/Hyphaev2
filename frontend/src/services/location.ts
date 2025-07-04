@@ -52,9 +52,14 @@ class LocationService {
       const position = await this.getCurrentPosition();
       const { latitude, longitude } = position.coords;
 
+      const key = import.meta.env.VITE_OPENCAGE_API_KEY;
+      if (!key) {
+        throw new Error('VITE_OPENCAGE_API_KEY is missing');
+      }
+
       // Use reverse geocoding to get location details
       const response = await axios.get(
-        `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${import.meta.env.VITE_OPENCAGE_API_KEY}`,
+        `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=${key}`,
       );
 
       const result = response.data.results[0];
@@ -81,8 +86,13 @@ class LocationService {
     }
 
     try {
+      const weatherKey = import.meta.env.VITE_WEATHER_API_KEY;
+      if (!weatherKey) {
+        throw new Error('VITE_WEATHER_API_KEY is missing');
+      }
+
       const response = await axios.get(
-        `https://api.weatherapi.com/v1/forecast.json?key=${import.meta.env.VITE_WEATHER_API_KEY}&q=${this.currentLocation.latitude},${this.currentLocation.longitude}&days=5`,
+        `https://api.weatherapi.com/v1/forecast.json?key=${weatherKey}&q=${this.currentLocation.latitude},${this.currentLocation.longitude}&days=5`,
       );
 
       return {
