@@ -21,6 +21,39 @@ const MycelialLoginPanel: React.FC<MycelialLoginPanelProps> = ({ onSuccess }) =>
   const hasAnimated = useRef(false);
   const typingRef = useRef<HTMLDivElement>(null);
 
+  // Load any previously stored username and toggle state
+  useEffect(() => {
+    const savedId = typeof localStorage !== 'undefined'
+      ? localStorage.getItem('hyphae_username')
+      : null;
+    if (savedId) {
+      setNeuralId(savedId);
+      setPreserveEcho(true);
+    }
+  }, []);
+
+  // Persist neural ID when toggled on
+  useEffect(() => {
+    if (!preserveEcho) return;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('hyphae_username', neuralId);
+    }
+  }, [neuralId, preserveEcho]);
+
+  const handleToggle = () => {
+    const next = !preserveEcho;
+    setPreserveEcho(next);
+    if (!next) {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('hyphae_username');
+      }
+    } else {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('hyphae_username', neuralId);
+      }
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
       try {
@@ -139,7 +172,7 @@ const MycelialLoginPanel: React.FC<MycelialLoginPanelProps> = ({ onSuccess }) =>
         <div className="flex items-center justify-between text-xs text-gray-400">
           <Toggle
             checked={preserveEcho}
-            onChange={() => setPreserveEcho(!preserveEcho)}
+            onChange={handleToggle}
             label="Persist Thoughtform"
           />
           <button
