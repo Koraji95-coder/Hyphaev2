@@ -13,17 +13,6 @@ interface WeatherData {
   }>;
 }
 
-interface WeatherAPIForecastDay {
-  date: string;
-  day: {
-    maxtemp_c: number;
-    mintemp_c: number;
-    condition: {
-      text: string;
-      icon: string;
-    };
-  };
-}
 
 interface LocationData {
   city: string;
@@ -86,28 +75,32 @@ class LocationService {
     }
 
     try {
-      const weatherKey = import.meta.env.VITE_WEATHER_API_KEY;
+      const weatherKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
       if (!weatherKey) {
-        throw new Error('VITE_WEATHER_API_KEY is missing');
+        throw new Error("VITE_OPENWEATHER_API_KEY is missing");
       }
 
-      const response = await axios.get(
-        `https://api.weatherapi.com/v1/forecast.json?key=${weatherKey}&q=${this.currentLocation.latitude},${this.currentLocation.longitude}&days=5`,
+      const { latitude, longitude } = this.currentLocation;
+
+      const currentResponse = await axios.get(
+        `https://pro.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${weatherKey}`,
+      );
+
+      const forecastResponse = await axios.get(
+        `https://pro.openweathermap.org/data/2.5/forecast/daily?lat=${latitude}&lon=${longitude}&cnt=5&units=metric&appid=${weatherKey}`,
       );
 
       return {
-        temperature: response.data.current.temp_c,
-        condition: response.data.current.condition.text,
-        icon: response.data.current.condition.icon,
-        forecast: response.data.forecast.forecastday.map(
-          (day: WeatherAPIForecastDay) => ({
-            date: day.date,
-            high: day.day.maxtemp_c,
-            low: day.day.mintemp_c,
-            condition: day.day.condition.text,
-            icon: day.day.condition.icon,
-          })
-        ),
+        temperature: currentResponse.data.main.temp,
+        condition: currentResponse.data.weather[0].description,
+        icon: `http://openweathermap.org/img/wn/${currentResponse.data.weather[0].icon}@2x.png`,
+        forecast: forecastResponse.data.list.map((day: any) => ({
+          date: new Date(day.dt * 1000).toISOString(),
+          high: day.temp.max,
+          low: day.temp.min,
+          condition: day.weather[0].description,
+          icon: `http://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`,
+        })),
       };
     } catch (error) {
       console.error("Error fetching weather:", error);
