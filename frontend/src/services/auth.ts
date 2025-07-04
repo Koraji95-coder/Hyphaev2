@@ -122,8 +122,11 @@ export async function changePin(old_pin: string, new_pin: string): Promise<{ suc
  * Verify a user’s email address via token.
  * GET /auth/verify_email?token={token}
  */
-export async function verifyEmail(token: string): Promise<{ message: string }> {
-  const res = await api.get<{ message: string }>(`/auth/verify_email?token=${encodeURIComponent(token)}`);
+export async function verifyEmail(token: string, email?: string): Promise<{ message: string }> {
+  const params: Record<string, string> = { token };
+  if (email) params.email = email;
+  const query = new URLSearchParams(params).toString();
+  const res = await api.get<{ message: string }>(`/auth/verify_email?${query}`);
   return res.data;
 }
 

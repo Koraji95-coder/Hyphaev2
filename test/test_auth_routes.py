@@ -43,7 +43,7 @@ async def test_register_user_success():
 @pytest.mark.asyncio
 async def test_login_user_success():
     hashed_pw = bcrypt.hashpw(b'secret', bcrypt.gensalt()).decode()
-    user = MagicMock(id=1, username='alice', hashed_password=hashed_pw)
+    user = MagicMock(id=1, username='alice', hashed_password=hashed_pw, is_verified=True)
     result = MagicMock()
     result.scalar_one_or_none.return_value = user
     db = MagicMock()
@@ -54,6 +54,21 @@ async def test_login_user_success():
     assert resp['username'] == 'alice'
     assert resp['role'] == 'user'
     assert resp['token'] == 'fake-token'
+
+
+@pytest.mark.asyncio
+async def test_login_user_unverified():
+    hashed_pw = bcrypt.hashpw(b'secret', bcrypt.gensalt()).decode()
+    user = MagicMock(id=1, username='alice', hashed_password=hashed_pw, is_verified=False)
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = user
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=result)
+
+    creds = UserLogin(username='alice', password='secret')
+    with pytest.raises(HTTPException) as exc:
+        await auth.login_user(creds, db=db)
+    assert exc.value.status_code == 403
 
 
 @pytest.mark.asyncio
@@ -80,6 +95,21 @@ async def test_verify_email_success():
     assert user.is_verified is True
     assert user.verification_token is None
     db.commit.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_verify_email_already_verified():
+    first_result = MagicMock()
+    first_result.scalar_one_or_none.return_value = None
+    verified_user = MagicMock(is_verified=True)
+    second_result = MagicMock()
+    second_result.scalar_one_or_none.return_value = verified_user
+
+    db = MagicMock()
+    db.execute = AsyncMock(side_effect=[first_result, second_result])
+
+    resp = await auth.verify_email(token='bad', email='alice@example.com', db=db)
+    assert resp == {'message': 'Email already verified'}
 
 
 @pytest.mark.asyncio

@@ -30,7 +30,7 @@ const EmailVerificationPanel: React.FC = () => {
       setStatus("pending");
       setMessage("Verifying your email...");
       axios
-        .get("/api/auth/verify_email", { params: { token } })
+        .get("/api/auth/verify_email", { params: { token, email } })
         .then(res => {
           setStatus("success");
           setMessage(res.data.message || "Email verified! You may now log in.");

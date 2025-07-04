@@ -59,6 +59,8 @@ async def login_user(credentials: UserLogin, db: AsyncSession = Depends(get_db))
     user = result.scalar_one_or_none()
     if not user or not bcrypt.checkpw(password.encode(), user.hashed_password.encode()):
         raise HTTPException(status_code=401, detail="Invalid username or password")
+    if not user.is_verified:
+        raise HTTPException(status_code=403, detail="Email not verified")
 
     return {"id": user.id, "username": user.username, "role": "user", "token": "fake-token", "pin_verified": True}
 
@@ -116,6 +118,7 @@ async def change_pin(
 @router.get("/auth/verify_email")
 async def verify_email(
     token: str = Query(...),
+    email: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -123,6 +126,11 @@ async def verify_email(
     )
     user = result.scalar_one_or_none()
     if not user:
+        if email:
+            result = await db.execute(select(User).where(User.email == email))
+            user_email = result.scalar_one_or_none()
+            if user_email and user_email.is_verified:
+                return {"message": "Email already verified"}
         raise HTTPException(status_code=404, detail="Invalid token")
     user.is_verified = True
     user.verification_token = None
