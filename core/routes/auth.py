@@ -67,8 +67,9 @@ async def logout_user():
     return {"status": "logged_out"}
 
 @router.get("/auth/me")
-async def get_profile(user_id: int = 1, db: AsyncSession = Depends(get_db)):
-    user = await db.get(User, user_id)
+async def get_profile(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).limit(1))
+    user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"id": user.id, "username": user.username, "email": user.email, "role": "user", "verified": True}
