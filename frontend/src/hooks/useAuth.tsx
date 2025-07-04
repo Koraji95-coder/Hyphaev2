@@ -56,20 +56,37 @@ function useProvideAuth(): AuthContextType {
   const [loading, setLoading] = useState<boolean>(true);
   const [error,   setError]   = useState<string | null>(null);
 
-  // on mount: try to refresh token and fetch profile
+  // on mount: check for stored token before hitting the network
   const initRef = useRef(false);
   useEffect(() => {
     if (initRef.current) return;
     initRef.current = true;
+    const existingToken =
+      (typeof localStorage !== "undefined" && localStorage.getItem("hyphae_token")) ||
+      null;
+
+    if (!existingToken) {
+      setLoading(false);
+      return;
+    }
+
+    setToken(existingToken);
     (async () => {
       setLoading(true);
       try {
         const newToken = await refreshTokenService();
         setToken(newToken);
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem("hyphae_token", newToken);
+        }
         const me = await getProfile();
         setUser(me);
       } catch {
         setUser(null);
+        setToken(null);
+        if (typeof localStorage !== "undefined") {
+          localStorage.removeItem("hyphae_token");
+        }
       } finally {
         setLoading(false);
       }
@@ -96,6 +113,9 @@ function useProvideAuth(): AuthContextType {
     try {
       const res: AuthResult = await loginService({ username, password, code });
       setToken(res.token);
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("hyphae_token", res.token);
+      }
       const me = await getProfile();
       setUser(me);
       return me;
@@ -114,6 +134,9 @@ function useProvideAuth(): AuthContextType {
       await logoutService();
       setUser(null);
       setToken(null);
+      if (typeof localStorage !== "undefined") {
+        localStorage.removeItem("hyphae_token");
+      }
     } catch (e: any) {
       setError(e.message);
       throw e;
