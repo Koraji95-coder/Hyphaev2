@@ -7,11 +7,11 @@ interface Props {
 
 export default function IndexTicker({ indices }: Props) {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <div className="bg-dark-200 rounded-lg shadow-sm p-4 mb-6 border border-dark-100/50 text-white">
       <div className="grid grid-cols-3 gap-4">
         {Object.entries(indices).map(([symbol, data]) => (
-          <div key={symbol} className={`text-center ${symbol!=="^DJI"?"border-l border-gray-200":""}`}>
-            <div className="text-sm text-gray-500">
+          <div key={symbol} className={`text-center ${symbol!=="^DJI"?"border-l border-dark-100/50":""}`}>
+            <div className="text-sm text-gray-400">
               {symbol==="^DJI"?"Dow Jones":symbol==="^GSPC"?"S&P 500":"Nasdaq"}
             </div>
             <div className="text-xl font-semibold">

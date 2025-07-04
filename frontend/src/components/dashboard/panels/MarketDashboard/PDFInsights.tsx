@@ -16,7 +16,7 @@ interface Props {
 export default function PDFInsights({ insights, showModal, selectedFile, onFileChange, onUpload, status, onClose }: Props) {
   return (
     <div>
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-dark-200 rounded-lg shadow-sm p-6 border border-dark-100/50 text-white">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">PDF Insights</h2>
           <button onClick={()=>onClose()} className="text-indigo-600 flex items-center gap-1">
@@ -40,7 +40,7 @@ export default function PDFInsights({ insights, showModal, selectedFile, onFileC
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <div className="bg-dark-200 rounded-lg p-6 max-w-md w-full border border-dark-100/50 text-white">
             <div className="flex justify-between mb-4">
               <h3 className="text-lg font-semibold">Upload PDF</h3>
               <button onClick={onClose}><X/></button>

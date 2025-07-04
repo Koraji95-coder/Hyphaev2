@@ -10,7 +10,7 @@ interface Props {
 
 export default function WatchlistTable({ watchlist, searchTerm, setSearchTerm, onAddSymbol }: Props) {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-dark-200 rounded-lg shadow-sm p-6 border border-dark-100/50 text-white">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Watchlist</h2>
         <div className="flex gap-2">

@@ -19,7 +19,7 @@ export default function AlertRulesPanel() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+    <div className="bg-dark-200 rounded-lg shadow-sm p-6 mb-6 border border-dark-100/50 text-white">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Alert Rules</h2>
         <button
