@@ -16,10 +16,11 @@ const MycelialForgotPanel: React.FC = () => {
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await requestPasswordReset(email);
+      const res = await requestPasswordReset(email);
       setTerminalLines((prev) => [
         ...prev,
-        `📨 Reset signal transmitted to ${email}.`,
+        `📨 Reset link sent to ${email}.`,
+        `👤 Your handle is ${res.username}.`,
         "🧠 Reintegration pending operator action.",
       ]);
     } catch (err: unknown) {

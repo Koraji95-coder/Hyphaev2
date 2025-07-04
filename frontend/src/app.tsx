@@ -15,6 +15,7 @@ import MycelialLoginPanel      from "@/components/auth/MycelialLoginPanel";
 import MycelialRegisterPanel   from "@/components/auth/MycelialRegisterPanel";
 import ForgotPasswordPanel     from "@/components/auth/ForgotPasswordPanel";
 import EmailVerificationPanel from "@/components/auth/EmailVerificationPanel";
+import ResetPasswordPanel     from "@/components/auth/ResetPasswordPanel";
 
 // private
 import PinAuthVault            from "@/components/auth/PinAuthVault";
@@ -130,6 +131,7 @@ export default function App() {
           <Route path="/login"          element={<LoginRoute />} />
           <Route path="/register"       element={<MycelialRegisterPanel />} />
           <Route path="/forgot-password" element={<ForgotPasswordPanel />} />
+          <Route path="/reset-password"  element={<ResetPasswordPanel />} />
           <Route path="/verify-email"   element={<EmailVerificationPanel />} />
   
 
