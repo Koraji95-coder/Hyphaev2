@@ -13,6 +13,18 @@ interface WeatherData {
   }>;
 }
 
+interface WeatherAPIForecastDay {
+  date: string;
+  day: {
+    maxtemp_c: number;
+    mintemp_c: number;
+    condition: {
+      text: string;
+      icon: string;
+    };
+  };
+}
+
 interface LocationData {
   city: string;
   region: string;
@@ -77,13 +89,15 @@ class LocationService {
         temperature: response.data.current.temp_c,
         condition: response.data.current.condition.text,
         icon: response.data.current.condition.icon,
-        forecast: response.data.forecast.forecastday.map((day: any) => ({
-          date: day.date,
-          high: day.day.maxtemp_c,
-          low: day.day.mintemp_c,
-          condition: day.day.condition.text,
-          icon: day.day.condition.icon,
-        })),
+        forecast: response.data.forecast.forecastday.map(
+          (day: WeatherAPIForecastDay) => ({
+            date: day.date,
+            high: day.day.maxtemp_c,
+            low: day.day.mintemp_c,
+            condition: day.day.condition.text,
+            icon: day.day.condition.icon,
+          })
+        ),
       };
     } catch (error) {
       console.error("Error fetching weather:", error);

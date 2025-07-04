@@ -13,7 +13,7 @@ export interface FeedbackPending extends FeedbackEntry {
   gpt_sentiment?: string;
   gpt_suggestion?: string;
   gpt_confidence?: number | string;
-  [key: string]: any; // For any extra fields
+  [key: string]: unknown; // For any extra fields
 }
 
 // Submit feedback (returns status + id)
@@ -29,7 +29,7 @@ export async function getPendingFeedback(): Promise<FeedbackPending[]> {
 }
 
 // (Optional) Analyze feedback using GPT
-export async function analyzeFeedback(message: string, feedback_type: string): Promise<any> {
+export async function analyzeFeedback(message: string, feedback_type: string): Promise<unknown> {
   const res = await api.post("/feedback/analyze", { message, feedback_type });
   return res.data.analysis;
 }

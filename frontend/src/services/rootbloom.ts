@@ -8,7 +8,7 @@ export interface RootbloomResponse {
   agent:    string;
   response: string;
   timestamp: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -17,7 +17,7 @@ export interface RootbloomResponse {
  */
 export async function generateContent(
   prompt: string,
-  context?: any
+  context?: unknown
 ): Promise<RootbloomResponse> {
   const res = await api.post<RootbloomResponse>("/rootbloom/generate", {
     prompt,
@@ -32,7 +32,7 @@ export async function generateContent(
  */
 export async function checkRootbloomHealth(): Promise<{
   status: string;
-  details: any;
+  details: unknown;
   timestamp: string;
 }> {
   const res = await api.get("/rootbloom/health");
@@ -45,7 +45,7 @@ export async function checkRootbloomHealth(): Promise<{
 export class RootbloomStream {
   private ws?: WebSocket;
   private clientId: string;
-  private listeners: Array<(data: any) => void> = [];
+  private listeners: Array<(data: unknown) => void> = [];
 
   constructor(clientId: string) {
     this.clientId = clientId;
@@ -57,7 +57,7 @@ export class RootbloomStream {
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onmessage = (event) => {
-      let data: any;
+      let data: unknown;
       try { data = JSON.parse(event.data); }
       catch { data = event.data; }
       this.listeners.forEach((cb) => cb(data));
@@ -73,7 +73,7 @@ export class RootbloomStream {
     }
   }
 
-  onMessage(cb: (data: any) => void) {
+  onMessage(cb: (data: unknown) => void) {
     this.listeners.push(cb);
   }
 

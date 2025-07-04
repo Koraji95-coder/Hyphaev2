@@ -6,7 +6,7 @@ export interface LogEntry {
   agent?: string;
   event?: string;
   message?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   timestamp: string;
   level?: string;
   tag?: string; // used in /logs/recent for 'event'
@@ -60,7 +60,7 @@ export async function flagLog(log_id: string, reason?: string) {
 export async function saveLog(entry: {
   agent: string;
   event: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   timestamp?: string;
 }) {
   const res = await api.post("/logs/save", entry);

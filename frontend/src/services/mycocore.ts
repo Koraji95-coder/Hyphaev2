@@ -15,7 +15,7 @@ export interface MycoCoreSnapshot {
 // Alerts result
 export interface MycoCoreAlerts {
   status: "ok" | "alert";
-  alerts: any[];       // Can type more strictly if you know alert shape
+  alerts: unknown[];       // Can type more strictly if you know alert shape
   timestamp: string;
 }
 
