@@ -8,8 +8,8 @@ import { api } from "./api";
 export interface SystemState {
   user: string;
   mood: string;
-  flags: Record<string, any>;
-  memory: Record<string, any>;
+  flags: Record<string, unknown>;
+  memory: Record<string, unknown>;
 }
 
 export interface MemoryEntry {
@@ -22,8 +22,8 @@ export interface MemoryEntry {
 }
 
 export interface MemoryState {
-  flags:  Record<string, any>;
-  memory: Record<string, any>;
+  flags:  Record<string, unknown>;
+  memory: Record<string, unknown>;
 }
 
 // ——————————————————————————————————————————————————————————————
@@ -59,7 +59,7 @@ export async function getUserMemoryChain(user: string): Promise<MemoryEntry[]> {
  * (Since there is no dedicated GET /state/memory/{key} endpoint,
  *  we pull the whole memory map and pick one key.)
  */
-export async function getUserMemoryValue(key: string): Promise<any> {
+export async function getUserMemoryValue(key: string): Promise<unknown> {
   const res = await api.get<MemoryState>("/state/memory");
   return res.data.memory[key];
 }

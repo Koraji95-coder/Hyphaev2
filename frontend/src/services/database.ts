@@ -36,7 +36,7 @@ export interface StructureItem {
   label: string;
 }
 
-export interface TableRow { [key: string]: any; }
+export interface TableRow { [key: string]: unknown; }
 export interface TableData { rows: TableRow[]; }
 
 export interface DatabaseMetrics {

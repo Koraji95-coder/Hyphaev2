@@ -10,7 +10,7 @@ export async function getAgentConnectionStats() {
 export class AgentStream {
   private ws?: WebSocket;
   private clientId: string;
-  private listeners: Array<(data: any) => void> = [];
+  private listeners: Array<(data: unknown) => void> = [];
 
   constructor(clientId: string) {
     this.clientId = clientId;
@@ -26,7 +26,7 @@ export class AgentStream {
     };
 
     this.ws.onmessage = (event) => {
-      let data;
+      let data: unknown;
       try {
         data = JSON.parse(event.data);
       } catch {
@@ -45,7 +45,7 @@ export class AgentStream {
     };
   }
 
-  onMessage(cb: (data: any) => void) {
+  onMessage(cb: (data: unknown) => void) {
     this.listeners.push(cb);
   }
 

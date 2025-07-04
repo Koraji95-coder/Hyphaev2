@@ -3,8 +3,8 @@ import { api } from "./api";
 // System state shape
 export interface SystemState {
   mode: string;
-  flags: Record<string, any>;
-  memory: Record<string, any>;
+  flags: Record<string, unknown>;
+  memory: Record<string, unknown>;
 }
 
 export interface DashboardSummary {

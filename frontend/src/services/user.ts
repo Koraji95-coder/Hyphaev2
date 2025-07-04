@@ -20,7 +20,7 @@ export interface UserList {
 
 // List all users (admin only)
 export async function listUsers(page = 1, per_page = 20, role?: string): Promise<UserList> {
-  const params: Record<string, any> = { page, per_page };
+  const params: Record<string, unknown> = { page, per_page };
   if (role) params.role = role;
   const res = await api.get<UserList>("/users", { params });
   return res.data;

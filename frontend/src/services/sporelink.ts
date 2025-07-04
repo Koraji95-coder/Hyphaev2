@@ -1,7 +1,7 @@
 import { api } from "./api";
 
 // 1. Analyze market/news data (AI agent)
-export async function analyzeMarketData(prompt: string, context?: any) {
+export async function analyzeMarketData(prompt: string, context?: unknown) {
   const res = await api.post("/sporelink/analyze", {
     prompt,
     context,
@@ -17,7 +17,7 @@ export async function getMarketData(symbol: string) {
 
 // 3. Get latest market news
 export async function getMarketNews(category?: string, limit = 10) {
-  const params: any = { limit };
+  const params: Record<string, unknown> = { limit };
   if (category) params.category = category;
   const res = await api.get("/sporelink/news", { params });
   return res.data; // { status, news, cached }
@@ -33,7 +33,7 @@ export async function checkSporelinkHealth() {
 export class SporelinkStream {
   private ws?: WebSocket;
   private clientId: string;
-  private listeners: Array<(data: any) => void> = [];
+  private listeners: Array<(data: unknown) => void> = [];
 
   constructor(clientId: string) {
     this.clientId = clientId;
@@ -46,7 +46,7 @@ export class SporelinkStream {
 
     this.ws.onopen = () => {};
     this.ws.onmessage = (event) => {
-      let data;
+      let data: unknown;
       try {
         data = JSON.parse(event.data);
       } catch {
@@ -66,7 +66,7 @@ export class SporelinkStream {
     }
   }
 
-  onMessage(cb: (data: any) => void) {
+  onMessage(cb: (data: unknown) => void) {
     this.listeners.push(cb);
   }
 
