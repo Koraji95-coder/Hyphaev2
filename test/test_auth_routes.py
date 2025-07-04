@@ -5,6 +5,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 import bcrypt
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+from fastapi import HTTPException
 
 from core.routes import auth
 from core.schemas import UserCreate, UserLogin
@@ -116,3 +117,42 @@ async def test_resend_verification_already_verified():
 
     resp = await auth.resend_verification(email='bob@example.com', db=db)
     assert resp == {'message': 'Email already verified'}
+
+
+@pytest.mark.asyncio
+async def test_get_profile_authenticated():
+    user = MagicMock(id=1, username='alice', email='alice@example.com')
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = user
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=result)
+
+    resp = await auth.get_profile(db=db, authorization='Bearer fake-token')
+    assert resp == {
+        'id': 1,
+        'username': 'alice',
+        'email': 'alice@example.com',
+        'role': 'user',
+        'verified': True,
+    }
+    db.execute.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_get_profile_missing_token():
+    db = MagicMock()
+    db.execute = AsyncMock()
+    with pytest.raises(HTTPException) as exc:
+        await auth.get_profile(db=db, authorization=None)
+    assert exc.value.status_code == 401
+    db.execute.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_get_profile_invalid_token():
+    db = MagicMock()
+    db.execute = AsyncMock()
+    with pytest.raises(HTTPException) as exc:
+        await auth.get_profile(db=db, authorization='Bearer bad')
+    assert exc.value.status_code == 401
+    db.execute.assert_not_awaited()
