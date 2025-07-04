@@ -186,3 +186,43 @@ async def test_get_profile_invalid_token():
         await auth.get_profile(db=db, authorization='Bearer bad')
     assert exc.value.status_code == 401
     db.execute.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_password_reset_request():
+    user = MagicMock(username='alice', email='alice@example.com')
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = user
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=result)
+    db.commit = AsyncMock()
+
+    with patch('core.routes.auth.secrets.token_urlsafe', return_value='tok123'):
+        with patch('core.routes.auth.send_email', new=AsyncMock()) as mock_send:
+            resp = await auth.password_reset_request(email='alice@example.com', db=db)
+            assert resp == {'message': 'Reset email sent', 'username': 'alice'}
+            reset_link = f"http://localhost:5173/reset-password?token=tok123"
+            mock_send.assert_awaited_once_with(
+                'alice@example.com',
+                'Password Reset',
+                f"Hello alice,\n\nYour username is: alice\nFollow this link to reset your password: {reset_link}",
+            )
+    assert user.reset_token == 'tok123'
+    db.commit.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_password_reset_verify():
+    hashed_pw = bcrypt.hashpw(b'old', bcrypt.gensalt()).decode()
+    user = MagicMock(reset_token='tok123', hashed_password=hashed_pw)
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = user
+    db = MagicMock()
+    db.execute = AsyncMock(return_value=result)
+    db.commit = AsyncMock()
+
+    resp = await auth.password_reset_verify(token='tok123', new_password='new', db=db)
+    assert resp == {'message': 'Password reset successful'}
+    assert user.reset_token is None
+    assert bcrypt.checkpw(b'new', user.hashed_password.encode())
+    db.commit.assert_called()

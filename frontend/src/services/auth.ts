@@ -152,8 +152,13 @@ export async function adminCheck(): Promise<{ message: string }> {
  * Request a password reset email.
  * POST /auth/password-reset/request
  */
-export async function requestPasswordReset(email: string): Promise<{ message: string }> {
-  const res = await api.post<{ message: string }>("/auth/password-reset/request", { email });
+export async function requestPasswordReset(
+  email: string,
+): Promise<{ message: string; username: string }> {
+  const res = await api.post<{ message: string; username: string }>(
+    "/auth/password-reset/request",
+    { email },
+  );
   return res.data;
 }
 

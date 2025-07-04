@@ -149,16 +149,43 @@ async def admin_only():
     return {"message": "admin access granted"}
 
 @router.post("/auth/password-reset/request")
-async def password_reset_request(email: str):
+async def password_reset_request(
+    email: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    token = secrets.token_urlsafe()
+    user.reset_token = token
+    await db.commit()
+
+    reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
     await send_email(
         email,
         "Password Reset",
-        "Follow this link to reset your password.",
+        f"Hello {user.username},\n\nYour username is: {user.username}\n"
+        f"Follow this link to reset your password: {reset_link}",
     )
-    return {"message": "Reset email sent"}
+    return {"message": "Reset email sent", "username": user.username}
 
 @router.post("/auth/password-reset/verify")
-async def password_reset_verify(token: str, new_password: str):
+async def password_reset_verify(
+    token: str = Body(..., embed=True),
+    new_password: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.reset_token == token))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Invalid token")
+
+    hashed_pw = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+    user.hashed_password = hashed_pw
+    user.reset_token = None
+    await db.commit()
     return {"message": "Password reset successful"}
 
 
