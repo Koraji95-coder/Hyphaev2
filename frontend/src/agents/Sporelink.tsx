@@ -1,5 +1,5 @@
 // src/agents/Sporelink.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import Card from "@/components/ui/StatusCard";
 import { useSporelink } from "@/hooks/useSporelink";
@@ -16,6 +16,7 @@ const Sporelink: React.FC = () => {
     fetchMarket,
     fetchNews,
   } = useSporelink();
+  const [view, setView] = useState<"dashboard" | "news">("dashboard");
 
   useEffect(() => {
     analyze("What’s the market outlook today?");
@@ -25,8 +26,24 @@ const Sporelink: React.FC = () => {
 
   return (
     <div className="space-y-8 p-6">
-      {/* ── Top‐level summary cards ───────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="flex justify-end space-x-2">
+        <button
+          className={`px-3 py-1 rounded ${view === "dashboard" ? "bg-primary-500" : "bg-dark-300"}`}
+          onClick={() => setView("dashboard")}
+        >
+          Dashboard
+        </button>
+        <button
+          className={`px-3 py-1 rounded ${view === "news" ? "bg-primary-500" : "bg-dark-300"}`}
+          onClick={() => setView("news")}
+        >
+          News
+        </button>
+      </div>
+      {view === "dashboard" && (
+        <>
+        {/* ── Top‐level summary cards ───────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {analysis && (
           <Card
             title="AI Analysis"
@@ -78,6 +95,18 @@ const Sporelink: React.FC = () => {
 
       {/* ── Full Market Dashboard ─────────────────────────── */}
       <MarketDashboard />
+      </>
+      )}
+      {view === "news" && (
+        <div className="space-y-4">
+          {news.map((n, i) => (
+            <a key={i} href={n.url} className="block p-4 rounded bg-dark-200 border border-dark-100/50 hover:bg-dark-100">
+              <h3 className="font-medium text-white">{n.title}</h3>
+              {n.source && <p className="text-xs text-gray-400">{n.source}</p>}
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

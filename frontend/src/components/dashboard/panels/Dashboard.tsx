@@ -2,14 +2,21 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "./Navigation";
 import Overview from "./Overview";
-import Agents from "./agents";
 import MemoryVault from "@/components/dashboard/panels/MemoryVault/index";
-import PredictiveModels from "./PredictiveModels";
 import Settings from "@/components/dashboard/panels/settings/SettingsIndex";
+import Neuroweave from "@/agents/Neuroweave";
+import Sporelink from "@/agents/Sporelink";
+import Rootbloom from "@/agents/Rootbloom";
 import { useAuth } from "@/hooks/useAuth";
 import ParticleBackground from "@/components/ui/ParticleBackground";
 
-type TabType = "overview" | "agents" | "memory" | "models" | "settings";
+type TabType =
+  | "overview"
+  | "neuroweave"
+  | "sporelink"
+  | "rootbloom"
+  | "memory"
+  | "settings";
 
 interface DashboardProps {
   onLogout: () => void;
@@ -21,9 +28,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   const tabComponents = {
     overview: <Overview onLogout={onLogout} />,
-    agents:   <Agents />,
-    memory:   <MemoryVault />,
-    models:   <PredictiveModels />,
+    neuroweave: <Neuroweave />,
+    sporelink: <Sporelink />,
+    rootbloom: <Rootbloom />,
+    memory: <MemoryVault />,
     settings: <Settings onLogout={onLogout} />,
   };
 

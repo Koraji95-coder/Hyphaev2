@@ -5,7 +5,8 @@ import {
   LayoutDashboard,
   Users,
   Database,
-  LineChart,
+  Brain,
+  Flower2,
   Settings as SettingsIcon,
   LogOut,
   ChevronLeft,
@@ -32,9 +33,10 @@ const Navigation: React.FC<NavigationProps> = ({
 
   const navigationItems = [
     { id: "overview", label: "Overview", icon: <LayoutDashboard size={20} /> },
-    { id: "agents", label: "Agents", icon: <Users size={20} /> },
+    { id: "neuroweave", label: "Neuroweave", icon: <Brain size={20} /> },
+    { id: "sporelink", label: "Sporelink", icon: <Users size={20} /> },
+    { id: "rootbloom", label: "Rootbloom", icon: <Flower2 size={20} /> },
     { id: "memory", label: "Memory Vault", icon: <Database size={20} /> },
-    { id: "models", label: "Predictive Models", icon: <LineChart size={20} /> },
     { id: "settings", label: "Settings", icon: <SettingsIcon size={20} /> },
   ];
 
