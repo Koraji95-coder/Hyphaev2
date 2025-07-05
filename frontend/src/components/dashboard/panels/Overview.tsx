@@ -114,36 +114,13 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        className="grid grid-cols-1 gap-6"
       >
         <motion.div variants={itemVariants}>
           <RecentActivity />
         </motion.div>
 
-        <motion.div variants={itemVariants} className="bg-dark-200/80 backdrop-blur-sm rounded-xl p-6 border border-dark-100/50 shadow-lg">
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={onLogout}
-              className="text-sm px-4 py-2 rounded-lg bg-error-500/20 hover:bg-error-500/30 text-error-300 transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-white">System Alerts</h2>
-            <span className={`rounded-full px-2 py-1 text-xs font-medium ${
-                systemStatus.warnings > 0
-                  ? "bg-warning-500/20 text-warning-300"
-                  : "bg-success-500/20 text-success-300"
-              }`}
-            >
-              {systemStatus.warnings} Warnings
-            </span>
-          </div>
-          <div className="space-y-3">
-            {/* Add your alert cards or items here */}
-          </div>
-        </motion.div>
+        {/* TODO: Replace removed alert panel with terminal-style log feed */}
       </motion.div>
     </div>
   );

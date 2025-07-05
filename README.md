@@ -18,3 +18,10 @@ This repository contains the HyphaeOS backend and frontend.
    ```bash
    python main.py
    ```
+
+## Dashboard Notes
+
+The overview page previously displayed a right-side alerts panel with a logout
+button. This panel has been removed. A future improvement could be a
+terminal-style log feed similar to the authentication screens to surface system
+warnings and other activity.
