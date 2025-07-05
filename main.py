@@ -35,6 +35,7 @@ API_PREFIX = "/api"
 API_V1_PREFIX = "/api/v1"
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -86,8 +87,7 @@ async def market_broadcast():
         )
         await asyncio.sleep(1)
 
-
-sio_app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
+sio_app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app, socketio_path="market")
 
 fastapi_app.add_middleware(
     CORSMiddleware,
@@ -118,7 +118,7 @@ routers = [
 ]
 for router in routers:
     fastapi_app.include_router(router, prefix=API_PREFIX)
-    fastapi_app.include_router(router, prefix=API_V1_PREFIX)
+
 
 # Expose ASGI app with Socket.IO mounted
 app = sio_app

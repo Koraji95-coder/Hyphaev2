@@ -103,7 +103,7 @@ export function useMarketDashboard() {
     if (!selectedSymbol) return;
     (async () => {
       try {
-        const res = await fetch(`/api/v1/market/${encodeURIComponent(selectedSymbol)}/history`);
+        const res = await fetch(`/api/market/${encodeURIComponent(selectedSymbol)}/history`);
         const hist = await res.json();
         setHistoricalData(hist);
         calculateIndicators(hist);
@@ -139,7 +139,7 @@ export function useMarketDashboard() {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await fetch("/api/v1/news");
+        const res = await fetch("/api/news");
         setNewsData(await res.json());
       } catch (err) {
         console.error("Failed to fetch news:", err);
@@ -155,7 +155,7 @@ export function useMarketDashboard() {
     if (!selectedSymbol) return;
     (async () => {
       try {
-        const res = await fetch(`/api/v1/market-context/${selectedSymbol}`);
+        const res = await fetch(`/api/market-context/${selectedSymbol}`);
         setMarketContext(await res.json());
       } catch (err) {
         console.error("Failed to fetch market context:", err);
@@ -191,7 +191,7 @@ export function useMarketDashboard() {
     const form = new FormData();
     form.append("file", selectedFile);
     try {
-      const res = await fetch("/api/v1/upload/pdf", { method: "POST", body: form });
+      const res = await fetch("/api/upload/pdf", { method: "POST", body: form });
       if (!res.ok) throw new Error("Upload failed");
       const data = await res.json();
       setPdfInsights((prev) => [
