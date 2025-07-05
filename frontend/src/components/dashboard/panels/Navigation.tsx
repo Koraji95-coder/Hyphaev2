@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { AuthUser as User } from "@/services/auth";
 import { motion } from "framer-motion";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -31,18 +32,52 @@ const Navigation: React.FC<NavigationProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const navigationItems = [
-    { id: "overview", label: "Overview", icon: <LayoutDashboard size={20} /> },
-    { id: "neuroweave", label: "Neuroweave", icon: <Brain size={20} /> },
-    { id: "sporelink", label: "Sporelink", icon: <Users size={20} /> },
-    { id: "rootbloom", label: "Rootbloom", icon: <Flower2 size={20} /> },
-    { id: "memory", label: "Memory Vault", icon: <Database size={20} /> },
-    { id: "settings", label: "Settings", icon: <SettingsIcon size={20} /> },
+    {
+      id: "overview",
+      label: "Overview",
+      icon: <LayoutDashboard size={20} />,
+      path: "/dashboard",
+    },
+    {
+      id: "neuroweave",
+      label: "Neuroweave",
+      icon: <Brain size={20} />,
+      path: "/neuroweave",
+    },
+    {
+      id: "sporelink",
+      label: "Sporelink",
+      icon: <Users size={20} />,
+      path: "/sporelink",
+    },
+    {
+      id: "rootbloom",
+      label: "Rootbloom",
+      icon: <Flower2 size={20} />,
+      path: "/rootbloom",
+    },
+    {
+      id: "memory",
+      label: "Memory Vault",
+      icon: <Database size={20} />,
+      path: "/memory",
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      icon: <SettingsIcon size={20} />,
+      path: "/settings",
+    },
   ];
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = (tabId: string, path: string) => {
     setActiveTab(tabId);
     setIsMobileMenuOpen(false);
+    navigate(path);
   };
 
   const toggleCollapse = () => {
@@ -136,11 +171,11 @@ const Navigation: React.FC<NavigationProps> = ({
                 {navigationItems.map((item) => (
                   <motion.button
                     key={item.id}
-                    onClick={() => handleTabChange(item.id)}
+                    onClick={() => handleTabChange(item.id, item.path)}
                     className={`
                       w-full flex items-center px-4 py-3 rounded-lg transition-colors
                       ${
-                        activeTab === item.id
+                        location.pathname === item.path
                           ? "bg-primary-500/20 text-primary-300"
                           : "text-gray-400 hover:bg-dark-100/50 hover:text-white"
                       }
@@ -203,12 +238,12 @@ const Navigation: React.FC<NavigationProps> = ({
             {navigationItems.map((item) => (
               <motion.button
                 key={item.id}
-                onClick={() => handleTabChange(item.id)}
+                onClick={() => handleTabChange(item.id, item.path)}
                 className={`
-                  w-full ${isCollapsed ? "flex flex-col items-center justify-center py-3 px-0" : "flex items-center px-4 py-3"} 
+                  w-full ${isCollapsed ? "flex flex-col items-center justify-center py-3 px-0" : "flex items-center px-4 py-3"}
                   rounded-lg transition-colors
                   ${
-                    activeTab === item.id
+                    location.pathname === item.path
                       ? "bg-primary-500/20 text-primary-300"
                       : "text-gray-400 hover:bg-dark-100/50 hover:text-white"
                   }

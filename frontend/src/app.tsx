@@ -26,6 +26,7 @@ import Neuroweave              from "@/agents/Neuroweave";
 import Rootbloom               from "@/agents/Rootbloom";
 import Sporelink               from "@/agents/Sporelink";
 import MemoryVault             from "@/components/dashboard/panels/MemoryVault";
+import Settings               from "@/components/dashboard/panels/settings/SettingsIndex";
 
 function LoginRoute() {
   const navigate = useNavigate();
@@ -106,6 +107,14 @@ function ProtectedApp() {
           element={
             <DashboardLayout>
               <MemoryVault />
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <DashboardLayout>
+              <Settings onLogout={logout} />
             </DashboardLayout>
           }
         />
