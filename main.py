@@ -1,7 +1,10 @@
 # main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
+import asyncio
+import random
+import socketio
 
 from core.config.settings import settings
 from core.cache.redis_cache import connect_redis, close_redis
@@ -25,9 +28,12 @@ from core.routes.plugins import router as plugins_router
 from core.routes.mycocore import router as mycocore_router
 from core.routes.state import router as state_router
 from core.routes.agents import router as agents_router
+from core.routes.market import router as market_router
 
 # Prefix for all API routes
 API_PREFIX = "/api"
+API_V1_PREFIX = "/api/v1"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,17 +44,52 @@ async def lifespan(app: FastAPI):
         logger.warning("Running without Redis cache")
     if not db_ok:
         logger.warning("Database unavailable; some features may not work")
+    task = asyncio.create_task(market_broadcast())
     yield
     # Shutdown
+    task.cancel()
+    with suppress(Exception):
+        await task
     await close_redis()
     await close_db()
 
-app = FastAPI(lifespan=lifespan)
+
+fastapi_app = FastAPI(lifespan=lifespan)
 
 # Allow CORS for the frontend origin
 origins = ["http://localhost:5173"]
 
-app.add_middleware(
+# Socket.IO server for market updates
+sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins=origins)
+
+
+# Background task to emit placeholder market data
+async def market_broadcast():
+    symbols = ["AAPL", "MSFT", "GOOG"]
+    indices = ["DOW", "NASDAQ"]
+    while True:
+        sym = random.choice(symbols)
+        await sio.emit(
+            "quote",
+            {"symbol": sym, "price": round(random.uniform(100, 500), 2)},
+            namespace="/market",
+        )
+        idx = random.choice(indices)
+        await sio.emit(
+            "index",
+            {
+                "symbol": idx,
+                "price": round(random.uniform(1000, 2000), 2),
+                "change": round(random.uniform(-5, 5), 2),
+            },
+            namespace="/market",
+        )
+        await asyncio.sleep(1)
+
+
+sio_app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
+
+fastapi_app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
@@ -73,6 +114,11 @@ routers = [
     mycocore_router,
     state_router,
     agents_router,
+    market_router,
 ]
 for router in routers:
-    app.include_router(router, prefix=API_PREFIX)
+    fastapi_app.include_router(router, prefix=API_PREFIX)
+    fastapi_app.include_router(router, prefix=API_V1_PREFIX)
+
+# Expose ASGI app with Socket.IO mounted
+app = sio_app

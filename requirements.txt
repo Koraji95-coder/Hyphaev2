@@ -9,3 +9,5 @@ python-dotenv
 alembic
 bcrypt
 aiosmtplib
+python-socketio
+aiosqlite
