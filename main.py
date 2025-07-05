@@ -32,6 +32,8 @@ from core.routes.market import router as market_router
 
 # Prefix for all API routes
 API_PREFIX = "/api"
+API_V1_PREFIX = "/api/v1"
+
 
 
 @asynccontextmanager
@@ -85,7 +87,6 @@ async def market_broadcast():
         )
         await asyncio.sleep(1)
 
-
 sio_app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app, socketio_path="market")
 
 fastapi_app.add_middleware(
@@ -117,6 +118,7 @@ routers = [
 ]
 for router in routers:
     fastapi_app.include_router(router, prefix=API_PREFIX)
+
 
 # Expose ASGI app with Socket.IO mounted
 app = sio_app
