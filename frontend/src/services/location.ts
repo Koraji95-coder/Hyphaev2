@@ -83,12 +83,13 @@ class LocationService {
       const { latitude, longitude } = this.currentLocation;
 
       const currentResponse = await axios.get(
-        `https://pro.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${weatherKey}`,
+        `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${weatherKey}`,
       );
 
       const forecastResponse = await axios.get(
-        `https://pro.openweathermap.org/data/2.5/forecast/daily?lat=${latitude}&lon=${longitude}&cnt=5&units=metric&appid=${weatherKey}`,
+        `https://api.openweathermap.org/data/2.5/forecast/daily?lat=${latitude}&lon=${longitude}&cnt=5&units=metric&appid=${weatherKey}`,
       );
+
 
       return {
         temperature: currentResponse.data.main.temp,

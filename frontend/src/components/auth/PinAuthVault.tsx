@@ -44,6 +44,7 @@ const PinAuthVault: React.FC<PinAuthVaultProps> = ({ onSuccess, onBack }) => {
   const [isVerified, setIsVerified] = useState(false);
   const [terminalLines, setTerminalLines] = useState<string[]>([
     "🔒 Vault access protocol initiated...",
+    " Hello, [user]! Please enter your PIN:",
   ]);
   const inputRef = useRef<HTMLInputElement>(null);
 

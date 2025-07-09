@@ -32,9 +32,6 @@ from core.routes.market import router as market_router
 
 # Prefix for all API routes
 API_PREFIX = "/api"
-API_V1_PREFIX = "/api/v1"
-
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -54,7 +51,6 @@ async def lifespan(app: FastAPI):
     await close_redis()
     await close_db()
 
-
 fastapi_app = FastAPI(lifespan=lifespan)
 
 # Allow CORS for the frontend origin
@@ -62,7 +58,6 @@ origins = ["http://localhost:5173"]
 
 # Socket.IO server for market updates
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins=origins)
-
 
 # Background task to emit placeholder market data
 async def market_broadcast():
@@ -95,6 +90,7 @@ fastapi_app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Authorization"],  # Ensure Authorization header is exposed
 )
 
 routers = [
@@ -118,7 +114,6 @@ routers = [
 ]
 for router in routers:
     fastapi_app.include_router(router, prefix=API_PREFIX)
-
 
 # Expose ASGI app with Socket.IO mounted
 app = sio_app

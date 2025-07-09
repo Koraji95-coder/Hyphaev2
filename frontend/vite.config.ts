@@ -16,10 +16,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8000', // Where FastAPI runs!
+        target: 'http://localhost:8000', // Your FastAPI backend
         changeOrigin: true,
-        // Rewrite is usually not needed with your setup, but can be added if needed:
-        // rewrite: (path) => path.replace(/^\/api/, '/api'),
+        secure: false,                   // <-- allow HTTP / self-signed certs in dev
+        // rewrite: (path) => path.replace(/^\/api/, '/api'), // optional
       },
     },
   },

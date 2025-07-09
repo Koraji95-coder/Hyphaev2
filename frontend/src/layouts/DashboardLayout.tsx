@@ -1,3 +1,4 @@
+//src/layouts/DashboardLayout.tsx
 import React, { useState } from "react";
 import Navigation from "@/components/dashboard/panels/Navigation";
 import ParticleBackground from "@/components/ui/ParticleBackground";
@@ -19,7 +20,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   return (
     <motion.div
-      className="min-h-screen bg-dark-300"
+      className="min-h-screen bg-black text-white font-mono"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -33,8 +34,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           user={navigationUser}
           onLogout={logout}
         />
-        <main className="flex-1 p-8">
-          <ErrorBoundary>{children}</ErrorBoundary>
+        <main className="flex-1 flex items-start justify-center p-8">
+          <div className="w-full max-w-4xl border border-emerald-800 rounded-md bg-black px-6 py-8 shadow-lg">
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </div>
         </main>
       </div>
     </motion.div>

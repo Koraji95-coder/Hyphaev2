@@ -1,4 +1,5 @@
 // src/hooks/useAuth.tsx
+
 import React, {
   createContext,
   useContext,
@@ -6,22 +7,27 @@ import React, {
   useEffect,
   useCallback,
   ReactNode,
-  useRef,
 } from "react";
-import type { User, AuthResult } from "@/services/auth";
+import { api } from "@/services/api";
+import type { User } from "@/services/auth";
 import {
   registerUser,
-  login    as loginService,
-  logout   as logoutService,
+  login as loginService,
+  logout as logoutService,
   getProfile,
-  refreshToken    as refreshTokenService,
-  setPin          as setPinService,
-  verifyPin       as verifyPinService,
-  changePin       as changePinService,
+  refreshToken as refreshTokenService,
+  setPin as setPinService,
+  verifyPin as verifyPinService,
+  changePin as changePinService,
   requestPasswordReset as requestPasswordResetService,
 } from "@/services/auth";
 
-type RegisterData = { username: string; email: string; password: string; pin: string };
+type RegisterData = {
+  username: string;
+  email: string;
+  password: string;
+  pin: string;
+};
 
 interface AuthContextType {
   user: User | null;
@@ -29,7 +35,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   register: (data: RegisterData) => Promise<User>;
-  login: (u: string, p: string, c?: string) => Promise<User>;
+  login: (username: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   setPin: (pin: string) => Promise<any>;
   verifyPin: (pin: string) => Promise<any>;
@@ -44,49 +50,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 };
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
   return ctx;
 }
 
 function useProvideAuth(): AuthContextType {
-  const [user,    setUser]    = useState<User | null>(null);
-  const [token,   setToken]   = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error,   setError]   = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // on mount: check for stored token before hitting the network
-  const initRef = useRef(false);
+  // On mount: try to refresh & fetch profile
   useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
-    const existingToken =
-      (typeof localStorage !== "undefined" && localStorage.getItem("hyphae_token")) ||
-      null;
-
-    if (!existingToken) {
-      setLoading(false);
-      return;
-    }
-
-    setToken(existingToken);
     (async () => {
       setLoading(true);
       try {
-        const newToken = await refreshTokenService();
-        setToken(newToken);
-        if (typeof localStorage !== "undefined") {
-          localStorage.setItem("hyphae_token", newToken);
-        }
+        const { access_token } = await refreshTokenService();
+        setToken(access_token);
+
+        // Attach Authorization header for subsequent calls
+        api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+
         const me = await getProfile();
         setUser(me);
       } catch {
+        // not logged in / refresh failed
         setUser(null);
         setToken(null);
-        if (typeof localStorage !== "undefined") {
-          localStorage.removeItem("hyphae_token");
-        }
       } finally {
         setLoading(false);
       }
@@ -107,20 +99,21 @@ function useProvideAuth(): AuthContextType {
     }
   }, []);
 
-  const login = useCallback(async (username: string, password: string, code?: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     setError(null);
     setLoading(true);
     try {
-      const res: AuthResult = await loginService({ username, password, code });
-      setToken(res.token);
-      if (typeof localStorage !== "undefined") {
-        localStorage.setItem("hyphae_token", res.token);
-      }
+      const { access_token } = await loginService({ username, password });
+      setToken(access_token);
+
+      // Attach Authorization header for subsequent calls
+      api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
+
       const me = await getProfile();
       setUser(me);
       return me;
     } catch (e: any) {
-      setError(e.message);
+      setError(e.response?.data?.detail || e.message);
       throw e;
     } finally {
       setLoading(false);
@@ -134,9 +127,7 @@ function useProvideAuth(): AuthContextType {
       await logoutService();
       setUser(null);
       setToken(null);
-      if (typeof localStorage !== "undefined") {
-        localStorage.removeItem("hyphae_token");
-      }
+      delete api.defaults.headers.common["Authorization"];
     } catch (e: any) {
       setError(e.message);
       throw e;
@@ -171,18 +162,21 @@ function useProvideAuth(): AuthContextType {
     }
   }, []);
 
-  const changePin = useCallback(async (oldPin: string, newPin: string) => {
-    setError(null);
-    setLoading(true);
-    try {
-      return await changePinService(oldPin, newPin);
-    } catch (e: any) {
-      setError(e.message);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const changePin = useCallback(
+    async (oldPin: string, newPin: string) => {
+      setError(null);
+      setLoading(true);
+      try {
+        return await changePinService(oldPin, newPin);
+      } catch (e: any) {
+        setError(e.message);
+        throw e;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   const requestPasswordReset = useCallback(async (email: string) => {
     setError(null);

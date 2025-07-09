@@ -10,6 +10,12 @@ import {
 import regression from "regression";
 import { mean, deviation } from "d3-array";
 
+export type BollingerBand = {
+  lower: number;
+  middle: number;
+  upper: number;
+};
+
 export interface Indicator {
   name: string;
   label: string;
@@ -39,8 +45,8 @@ export const indicators: Record<string, Indicator> = {
         period: 20,
         stdDev: 2,
         values: data,
-      });
-      return result.map((r: any) => r.middle); // Return middle band by default
+      }) as BollingerBand[];
+      return result.map((r) => r.middle); // Return middle band by default
     },
     defaultParams: { period: 20, stdDev: 2 },
   },

@@ -1,3 +1,4 @@
+//components/auth/MycelialLoginPanel.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Sprout } from 'lucide-react';
 import Toggle from '@/components/ui/Toggle';

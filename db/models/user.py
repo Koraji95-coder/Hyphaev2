@@ -1,3 +1,4 @@
+#db/models/user.py
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.sql import func
 
@@ -13,5 +14,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     verification_token = Column(String(128), nullable=True)
+    refresh_token = Column(String(128), nullable=True)
+    refresh_token_expires_at = Column(DateTime(timezone=True), nullable=True)
     reset_token = Column(String(128), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

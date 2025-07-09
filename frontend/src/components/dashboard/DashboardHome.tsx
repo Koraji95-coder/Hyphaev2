@@ -1,5 +1,6 @@
-// src/pages/Overview.tsx
-import React from "react";
+// src/components/dashboard/DashboardHome.tsx
+import React, { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import { Users, Zap, Clock, Brain } from "lucide-react";
 import StatusCard      from "@/components/ui/StatusCard";
@@ -7,11 +8,28 @@ import RecentActivity  from "@/components/widgets/RecentActivity";
 import SystemMetrics   from "@/components/widgets/SystemMetrics";
 import WeatherWidget   from "@/components/widgets/WeatherWidget";
 
-interface OverviewProps {
-  onLogout: () => void;
-}
+const DashboardHome: React.FC = () => {
+  const { user } = useAuth();
+  // Terminal panel state
+  const [terminalLines, setTerminalLines] = useState<string[]>([]);
+  const terminalRef = useRef<HTMLDivElement>(null);
 
-const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
+  // Initialize terminal with startup messages
+  useEffect(() => {
+    const initLogs = [
+      "Initializing Hyphae dashboard...",
+      "Loading modules: Overview, Metrics, Weather",
+      "System monitors active",
+    ];
+    setTerminalLines(initLogs);
+  }, []);
+
+  // Auto-scroll on new terminal entries
+  useEffect(() => {
+    terminalRef.current?.scrollTo({ top: terminalRef.current.scrollHeight });
+  }, [terminalLines]);
+
+  // Sample system status for cards
   const systemStatus = {
     activeAgents:    3,
     totalAgents:     5,
@@ -23,6 +41,7 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
     warnings:        1,
   };
 
+  // Animation variants
   const containerVariants = {
     hidden:  { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.4, staggerChildren: 0.1 } },
@@ -45,11 +64,11 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
           System Overview
         </motion.h1>
         <motion.p className="text-gray-400" variants={itemVariants}>
-          HyphaeOS is operating at optimal parameters
+          Welcome back, {user?.username || "Operator"}. Here’s where you left off.
         </motion.p>
       </motion.div>
 
-      {/* Top cards */}
+      {/* Status Cards */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -94,7 +113,7 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
         />
       </motion.div>
 
-      {/* Metrics + Weather */}
+      {/* Metrics & Weather */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -109,21 +128,29 @@ const Overview: React.FC<OverviewProps> = ({ onLogout }) => {
         </motion.div>
       </motion.div>
 
-      {/* Activity + Alerts */}
+      {/* Recent Activity */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 gap-6"
+        className="grid grid-cols-1 gap-6 mb-8"
       >
         <motion.div variants={itemVariants}>
           <RecentActivity />
         </motion.div>
-
-        {/* TODO: Replace removed alert panel with terminal-style log feed */}
       </motion.div>
+
+      {/* Terminal Panel */}
+      <div
+        ref={terminalRef}
+        className="mt-8 w-full bg-black border border-emerald-800 text-green-400 rounded-sm px-4 py-3 text-xs font-mono max-h-40 overflow-y-auto min-h-[120px]"
+      >
+        {terminalLines.map((line, idx) => (
+          <p key={idx}>{line}</p>
+        ))}
+      </div>
     </div>
   );
 };
 
-export default Overview;
+export default DashboardHome;
