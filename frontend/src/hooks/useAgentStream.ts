@@ -4,8 +4,12 @@ import { useEffect, useRef, useState } from "react";
 export function useAgentStream(path: string) {
   const [events, setEvents] = useState<any[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
+  const initialized = useRef(false);
 
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const host     = window.location.hostname;
     const port     = import.meta.env.DEV ? "8000" : window.location.port;

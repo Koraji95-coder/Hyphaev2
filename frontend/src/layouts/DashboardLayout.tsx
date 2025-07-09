@@ -1,5 +1,5 @@
 // src/layouts/DashboardLayout.tsx
-import React, { useState, useEffect } from "react";               // ← added useEffect
+import React, { useState, useEffect, useRef } from "react";               // ← added useEffect
 import Navigation from "@/components/dashboard/panels/Navigation";
 import ParticleBackground from "@/components/ui/ParticleBackground";
 import { motion } from "framer-motion";
@@ -14,8 +14,12 @@ interface DashboardLayoutProps {
 }
 
 const BootLogger: React.FC = () => {
-  const { push } = useTerminal();       // now defined
+  const { push } = useTerminal();
+  const ran = useRef(false);
+
   useEffect(() => {
+    if (ran.current) return;
+    ran.current = true;
     push("Initializing Hyphae dashboard...");
     const t1 = setTimeout(
       () => push("Loading modules: Overview, Metrics, Weather"),
