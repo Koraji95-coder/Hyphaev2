@@ -1,5 +1,4 @@
-// src/components/dashboard/DashboardHome.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import { Users, Zap, Clock, Brain } from "lucide-react";
@@ -10,24 +9,6 @@ import WeatherWidget   from "@/components/widgets/WeatherWidget";
 
 const DashboardHome: React.FC = () => {
   const { user } = useAuth();
-  // Terminal panel state
-  const [terminalLines, setTerminalLines] = useState<string[]>([]);
-  const terminalRef = useRef<HTMLDivElement>(null);
-
-  // Initialize terminal with startup messages
-  useEffect(() => {
-    const initLogs = [
-      "Initializing Hyphae dashboard...",
-      "Loading modules: Overview, Metrics, Weather",
-      "System monitors active",
-    ];
-    setTerminalLines(initLogs);
-  }, []);
-
-  // Auto-scroll on new terminal entries
-  useEffect(() => {
-    terminalRef.current?.scrollTo({ top: terminalRef.current.scrollHeight });
-  }, [terminalLines]);
 
   // Sample system status for cards
   const systemStatus = {
@@ -60,7 +41,10 @@ const DashboardHome: React.FC = () => {
         animate="visible"
         className="mb-8"
       >
-        <motion.h1 className="text-2xl md:text-3xl font-bold text-white mb-2" variants={itemVariants}>
+        <motion.h1
+          className="text-2xl md:text-3xl font-bold text-white mb-2"
+          variants={itemVariants}
+        >
           System Overview
         </motion.h1>
         <motion.p className="text-gray-400" variants={itemVariants}>
@@ -139,16 +123,6 @@ const DashboardHome: React.FC = () => {
           <RecentActivity />
         </motion.div>
       </motion.div>
-
-      {/* Terminal Panel */}
-      <div
-        ref={terminalRef}
-        className="mt-8 w-full bg-black border border-emerald-800 text-green-400 rounded-sm px-4 py-3 text-xs font-mono max-h-40 overflow-y-auto min-h-[120px]"
-      >
-        {terminalLines.map((line, idx) => (
-          <p key={idx}>{line}</p>
-        ))}
-      </div>
     </div>
   );
 };

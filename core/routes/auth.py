@@ -46,7 +46,7 @@ async def register_user(data: UserCreate, db: AsyncSession = Depends(get_db)):
     current_time = datetime.now(timezone.utc)
     expire_time = current_time + timedelta(hours=1)
     access_token = jwt.encode(
-        {"sub": user.id, "username": user.username, "exp": expire_time},
+        {"sub": str(user.id), "username": user.username, "exp": expire_time},
         settings.JWT_SECRET,
         algorithm="HS256"
     )
@@ -89,19 +89,19 @@ async def login_user(
     now = datetime.now(timezone.utc)
     expire = now + timedelta(hours=1)
     access_token = jwt.encode(
-        {"sub": user.id, "username": user.username, "exp": expire},
+        {"sub": str(user.id), "username": user.username, "exp": expire},
         settings.JWT_SECRET,
         algorithm="HS256",
     )
-    refresh_token = secrets.token_urlsafe(32)
-    user.refresh_token = refresh_token
+    new_refresh = secrets.token_urlsafe(32)
+    user.refresh_token = new_refresh
     user.refresh_token_expires_at = now + timedelta(days=7)
     await db.commit()
 
     # Set HttpOnly refresh cookie
     response.set_cookie(
         "refresh_token",
-        value=refresh_token,
+        value=new_refresh,
         httponly=True,
         secure=IS_PROD,       # <-- secure=False locally
         samesite="strict",
@@ -152,21 +152,32 @@ async def get_profile(
     authorization: str | None = Header(None),
     db: AsyncSession = Depends(get_db),
 ):
+    print("Incoming Authorization header:", authorization)
     if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(401, "Not authenticated")
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     token = authorization.split(" ", 1)[1]
 
+    # Decode the JWT
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
-        user_id = payload.get("sub")
-        if not user_id:
-            raise HTTPException(401, "Invalid token")
-    except JWTError:
-        raise HTTPException(401, "Invalid token")
+        print("Decoded JWT payload:", payload)
+    except JWTError as e:
+        print("JWT decode error:", e)
+        raise HTTPException(status_code=401, detail="Invalid token")
 
+    # Grab the subject and coerce to integer
+    sub = payload.get("sub")
+    try:
+        user_id = int(sub)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=401, detail="Invalid subject in token")
+
+    # Fetch the user
     user = await db.get(User, user_id)
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(status_code=404, detail="User not found")
+
     return {
         "id": user.id,
         "username": user.username,
@@ -174,6 +185,7 @@ async def get_profile(
         "role": "user",
         "verified": user.is_verified,
     }
+
 
 @router.post("/auth/refresh")
 async def refresh_token(
@@ -199,7 +211,7 @@ async def refresh_token(
     # Issue new tokens
     expire = now + timedelta(hours=1)
     access_token = jwt.encode(
-        {"sub": user.id, "username": user.username, "exp": expire},
+        {"sub": str(user.id), "username": user.username, "exp": expire},
         settings.JWT_SECRET,
         algorithm="HS256",
     )
@@ -211,7 +223,7 @@ async def refresh_token(
     # Set new HttpOnly cookie
     response.set_cookie(
         "refresh_token",
-        value=refresh_token,
+        value=new_refresh,
         httponly=True,
         secure=IS_PROD,       # <-- secure=False locally
         samesite="strict",

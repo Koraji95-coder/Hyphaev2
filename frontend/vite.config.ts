@@ -18,6 +18,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000', // Your FastAPI backend
         changeOrigin: true,
+        ws: true,
         secure: false,                   // <-- allow HTTP / self-signed certs in dev
         // rewrite: (path) => path.replace(/^\/api/, '/api'), // optional
       },

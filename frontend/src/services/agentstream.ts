@@ -1,14 +1,6 @@
-import { api } from "./api";
-
-export async function getAgentConnectionStats() {
-  const res = await api.get("/agents/stats");
-  return res.data;
-}
-
 // src/services/agentstream.ts
-
 export class AgentStream {
-  private ws?: WebSocket;
+  private ws: WebSocket | null = null;
   private clientId: string;
   private listeners: Array<(data: unknown) => void> = [];
 
@@ -18,30 +10,30 @@ export class AgentStream {
 
   connect() {
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${protocol}://${window.location.host}/agents/${this.clientId}`;
-    this.ws = new WebSocket(wsUrl);
+    // Make sure to hit your FastAPI endpoint, which is mounted at /api
+    const url = `${protocol}://${window.location.hostname}:${
+      import.meta.env.DEV ? "8000" : window.location.port || ""
+    }/api/agents/${this.clientId}`;
+
+    this.ws = new WebSocket(url);
 
     this.ws.onopen = () => {
-      // Optionally: send a hello, ping, or initial message
+      console.log("AgentStream connected →", url);
     };
 
     this.ws.onmessage = (event) => {
-      let data: unknown;
-      try {
-        data = JSON.parse(event.data);
-      } catch {
-        data = event.data;
-      }
-      this.listeners.forEach((cb) => cb(data));
+      let payload: unknown;
+      try { payload = JSON.parse(event.data); }
+      catch  { payload = event.data; }
+      this.listeners.forEach((cb) => cb(payload));
     };
 
     this.ws.onerror = (err) => {
-      // Optionally handle errors
-      console.error("WebSocket error:", err);
+      console.error("AgentStream WS error:", err);
     };
 
     this.ws.onclose = () => {
-      // Optionally: auto-reconnect logic
+      console.log("AgentStream disconnected");
     };
   }
 
@@ -58,7 +50,7 @@ export class AgentStream {
   close() {
     if (this.ws) {
       this.ws.close();
-      this.ws = undefined;
+      this.ws = null;
     }
   }
 }
