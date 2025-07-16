@@ -44,7 +44,7 @@ export default function ProfileSettings() {
         try {
             await changeUsername(clean);
             const msg = `✅ Username changed to ${clean}`;
-            emit("auth_success", msg);
+            emit("username", msg);
             await new Promise(res => setTimeout(res, 1000)); // <-- Try adding this
             await refreshUser();
         } catch (err) {
