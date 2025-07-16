@@ -46,7 +46,7 @@ export default function ProfileSettings() {
             const msg = `✅ Username changed to ${clean}`;
             emit("username", msg);
             await new Promise(res => setTimeout(res, 1000)); // <-- Try adding this
-            await refreshUser();
+            await refreshUser(true);
         } catch (err) {
             let msg = "Username update failed";
             const axiosErr = err as AxiosErrorLike;
@@ -71,7 +71,7 @@ export default function ProfileSettings() {
       await changeEmail(newEmail);
       emit("email", `Verification email sent to ${newEmail}. Please check your inbox.`);
       emit("auth_success", "✅ Verification email sent to your new address. Please click the link to confirm.");
-      await refreshUser();
+        await refreshUser(true);
     } catch (err) {
       let msg = "Email update failed";
       const axiosErr = err as AxiosErrorLike;
@@ -86,7 +86,7 @@ export default function ProfileSettings() {
     try {
       await cancelPendingEmail();
       emit("email", "Pending email change cancelled.");
-      await refreshUser();
+        await refreshUser(true);
     } catch {
       emit("auth_error", "Could not cancel pending email.");
     }
@@ -99,7 +99,7 @@ export default function ProfileSettings() {
       await changePassword(oldPass, newPass);
       emit("password", "Password updated successfully.");
       emit("auth_success", "✅ Password changed.");
-      await refreshUser();
+        await refreshUser(true);
     } catch {
       emit("auth_error", "Password change failed.");
     }
@@ -115,7 +115,7 @@ export default function ProfileSettings() {
       await changePin(oldPin, newPin);
       emit("pin", "PIN updated successfully.");
       emit("auth_success", "✅ PIN changed.");
-      await refreshUser();
+        await refreshUser(true);
     } catch {
       emit("auth_error", "PIN change failed.");
     }
