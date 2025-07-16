@@ -1,6 +1,9 @@
 // src/agents/mycocore/eventBus.ts
 
 export type MycoCoreEventType =
+  | "connect"
+  | "connected"
+  | "disconnect"
   | "log"
   | "warning"
   | "system"
@@ -18,6 +21,7 @@ export type MycoCoreEventType =
   | "snapshot"
   | "safe_mode"
   | "email_verified";
+
 
 export interface MycoCoreEvent {
   type: MycoCoreEventType;
@@ -45,6 +49,7 @@ class MycoCoreEventBus {
       timestamp: evt.timestamp || new Date().toISOString(),
       source: TAB_ID,
     };
+    console.log("[MycoCoreEventBus] EMIT", eventWithMeta);
     MycoCoreEventBus.listeners.forEach((cb) => cb(eventWithMeta));
     if (MycoCoreEventBus.channel) {
       MycoCoreEventBus.channel.postMessage(eventWithMeta);
@@ -52,6 +57,7 @@ class MycoCoreEventBus {
   }
 
   static subscribe(cb: Listener) {
+    console.log("[MycoCoreEventBus] SUBSCRIBE", cb);
     MycoCoreEventBus.listeners.push(cb);
     function bcHandler(e: MessageEvent) {
       if (

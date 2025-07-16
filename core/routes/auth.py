@@ -25,6 +25,8 @@ from core.config.settings import settings
 from core.utils.email import send_email
 from core.utils.dependencies import get_current_user
 from core.utils.logger import get_logger
+from core.websocket.websocket_manager import manager
+from core.websocket.emitter import emit_to_user
 
 from core.schemas import UserCreate, UserLogin, UserRead
 from db.database import get_db
@@ -289,7 +291,20 @@ async def change_username(
 
     user.username = new_username
     await db.commit()
+
+    # ✅ Emit using your helper
+    print(f"Emitting WebSocket event: user={user.id} username={new_username}")
+    print("About to emit")
+    await emit_to_user(
+    
+    user.id,
+    "auth_success",
+    f"Username changed to {new_username}",
+    payload={"username": new_username}
+    )
+    print("emitted!")
     return {"message": "Username changed successfully"}
+
 
 @router.post("/auth/refresh")
 async def refresh_token(
@@ -461,7 +476,7 @@ async def change_email(
 ):
     # 1) If there's no pending change and they submitted their current confirmed email
     if user.pending_email is None and user.email == new_email:
-        raise HTTPException(400, "That is already your current email")
+        raise HTTPException(400, "Your email is already set to that.")
 
     # 2) Prevent conflicts with another user's *confirmed* email
     existing = await db.execute(
@@ -493,9 +508,8 @@ async def change_email(
         verify_link=verify_link
     )
 
-    return {
-        "message": "Verification email sent to your new address. Please click the link to confirm."
-    }
+    return {"message": f"📧 Verification email sent to {new_email}. Please check your inbox and click the link to confirm."}
+
 
 @router.post("/auth/cancel_pending_email")
 async def cancel_pending_email(

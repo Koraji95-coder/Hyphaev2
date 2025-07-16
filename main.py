@@ -29,6 +29,7 @@ from core.routes.mycocore import router as mycocore_router, start_metrics_task
 from core.routes.state import router as state_router
 from core.routes.agents import router as agents_router
 from core.routes.market import router as market_router
+from core.routes.ws import router as ws_router
 
 # Prefix for all API routes
 API_PREFIX = "/api"
@@ -116,6 +117,7 @@ routers = [
     state_router,
     agents_router,
     market_router,
+    ws_router,
 ]
 for router in routers:
     fastapi_app.include_router(router, prefix=API_PREFIX)

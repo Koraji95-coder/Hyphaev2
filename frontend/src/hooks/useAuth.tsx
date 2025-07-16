@@ -1,4 +1,3 @@
-// src/hooks/useAuth.tsx
 import React, {
   createContext,
   useContext,
@@ -25,10 +24,17 @@ import {
   cancelPendingEmail as cancelPendingEmailService,
   requestPasswordReset as requestPasswordResetService,
 } from "@/services/auth";
+import {
+  initWebSocket,
+  closeWebSocket,
+  subscribeToSocket,
+} from "@/agents/mycocore/mycoSocket";
+import MycoCoreEventBus from "@/agents/mycocore/eventBus";
+import type { MycoCoreEvent } from "@/agents/mycocore/eventBus";
 
 export interface AxiosErrorLike {
   response?: {
-    status?: number; 
+    status?: number;
     data?: {
       detail?: string;
       message?: string;
@@ -50,14 +56,12 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   pinVerified: boolean;
-  
+  isSocketConnected: boolean;
 
   refreshUser: (silent?: boolean) => Promise<UserProfile>;
-
   register: (data: RegisterData) => Promise<UserProfile>;
   login: (username: string, password: string) => Promise<UserProfile>;
   logout: () => Promise<void>;
-
   setPin: (pin: string) => Promise<SimpleMessage>;
   verifyPin: (pin: string) => Promise<boolean>;
   changePin: (oldPin: string, newPin: string) => Promise<SimpleMessage>;
@@ -66,7 +70,6 @@ interface AuthContextType {
   changeEmail: (newEmail: string) => Promise<SimpleMessage>;
   cancelPendingEmail: () => Promise<SimpleMessage>;
   requestPasswordReset: (email: string) => Promise<SimpleMessage>;
-  
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -94,7 +97,36 @@ function useProvideAuth(): AuthContextType {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [pinVerified, setPinVerified] = useState<boolean>(false);
+  const [isSocketConnected, setSocketConnected] = useState<boolean>(true);
   const { logToTerminal } = useLogTerminal();
+
+  // --- WebSocket Reconnect Logic + Connection State ---
+  const reconnectSocket = useCallback(
+    (userId: number, attempt = 1, maxAttempts = 5) => {
+      if (attempt > maxAttempts) {
+        logToTerminal({
+          type: "auth_error",
+          message: "❌ WebSocket reconnect failed after 5 attempts.",
+        });
+        setSocketConnected(false);
+        return;
+      }
+      const backoff = Math.min(10000, 500 * Math.pow(2, attempt));
+      setTimeout(() => {
+        logToTerminal({
+          type: "auth_error",
+          message: `🔄 Reconnecting... (attempt ${attempt})`,
+        });
+        try {
+          initWebSocket();
+          setSocketConnected(true);
+        } catch {
+          reconnectSocket(userId, attempt + 1, maxAttempts);
+        }
+      }, backoff);
+    },
+    [logToTerminal]
+  );
 
   // Initialize session on mount
   useEffect(() => {
@@ -108,8 +140,8 @@ function useProvideAuth(): AuthContextType {
           const profile = await getProfile();
           setUser(profile);
           setPinVerified(profile.pin_verified || false);
+          initWebSocket();
         } else {
-          // only try to refresh _if_ a refresh_token cookie is present
           const hasRefreshCookie = document.cookie
             .split("; ")
             .some((c) => c.startsWith("refresh_token="));
@@ -124,24 +156,22 @@ function useProvideAuth(): AuthContextType {
                 const profile = await getProfile();
                 setUser(profile);
                 setPinVerified(profile.pin_verified || false);
+                initWebSocket();
               }
             } catch {
-              console.warn("Refresh token invalid or expired, requiring login");
               setUser(null);
               setToken(null);
               delete api.defaults.headers.common["Authorization"];
               localStorage.removeItem("auth_access_token");
             }
           } else {
-            console.warn("No refresh_token cookie found, requiring login");
             setUser(null);
             setToken(null);
             delete api.defaults.headers.common["Authorization"];
             localStorage.removeItem("auth_access_token");
           }
         }
-      } catch (err) {
-        console.warn("Initial auth failed:", err);
+      } catch {
         setUser(null);
         setToken(null);
         delete api.defaults.headers.common["Authorization"];
@@ -153,6 +183,26 @@ function useProvideAuth(): AuthContextType {
     initAuth();
   }, []);
 
+  // WebSocket subscribe effect with connection state
+  useEffect(() => {
+    if (user?.id) {
+      const unsubscribe = subscribeToSocket((evt: MycoCoreEvent) => {
+        MycoCoreEventBus.emit(evt);
+        if (evt.type === "disconnect") {
+          setSocketConnected(false);
+          logToTerminal({
+            type: "auth_error",
+            message: "⚠️ WebSocket disconnected.",
+          });
+          reconnectSocket(user.id);
+        } else if (evt.type === "connect" || evt.type === "connected") {
+          setSocketConnected(true);
+        }
+      });
+
+      return () => unsubscribe();
+    }
+  }, [user?.id, reconnectSocket, logToTerminal]);
   // Validate JWT (basic check for 3 segments)
   const isValidToken = (t: string): boolean => t.split(".").length === 3;
 
@@ -201,11 +251,12 @@ function useProvideAuth(): AuthContextType {
         const { access_token } = result;
         if (access_token && isValidToken(access_token)) {
           setToken(access_token);
-          setPinVerified(false); // Always require PIN after login!
+          setPinVerified(false);
           api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
           localStorage.setItem("auth_access_token", access_token);
           const profile = await getProfile();
           setUser(profile);
+          initWebSocket();
           return profile;
         }
         throw new Error("Invalid access token received");
@@ -231,6 +282,7 @@ function useProvideAuth(): AuthContextType {
       setPinVerified(false);
       delete api.defaults.headers.common["Authorization"];
       localStorage.removeItem("auth_access_token");
+      closeWebSocket();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
@@ -314,7 +366,7 @@ function useProvideAuth(): AuthContextType {
     []
   );
 
-// Change Username (with broadcast, and custom error for already current username)
+  // Change Username (with broadcast, and custom error for already current username)
   const changeUsername = useCallback(
     async (newUsername: string): Promise<SimpleMessage> => {
       setError(null);
@@ -325,7 +377,7 @@ function useProvideAuth(): AuthContextType {
         const channel = new BroadcastChannel("usernameUpdates");
         channel.postMessage({ type: "usernameUpdated", newUsername });
         channel.close();
-        logToTerminal({ type: "auth_success", message: "Username changed successfully" });
+        logToTerminal({ type: "auth_success", message: res.message });
         return res;
       } catch (e: unknown) {
         let msg = "Unknown error";
@@ -358,7 +410,6 @@ function useProvideAuth(): AuthContextType {
     [logToTerminal]
   );
 
-
   // Change Email (with MycoCore event broadcast)
   const changeEmail = useCallback(
     async (newEmail: string): Promise<SimpleMessage> => {
@@ -372,18 +423,36 @@ function useProvideAuth(): AuthContextType {
         emailChannel.postMessage({ type: "emailUpdated", newEmail });
         emailChannel.close();
 
+        logToTerminal({ type: "auth_success", message: res.message });
         return res;
       } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
+        let msg = "Unknown error";
+        if (typeof e === "object" && e !== null && "response" in e) {
+          const err = e as AxiosErrorLike;
+          if (err.response?.status === 400) {
+            if (err.response.data?.detail === "Your email is already set to that.")
+              msg = "Your email is already set to that.";
+            else if (err.response.data?.detail) msg = err.response.data.detail;
+            else msg = err.response?.data?.message || "Bad request.";
+          } else {
+            msg =
+              err.response?.data?.detail ||
+              err.response?.data?.message ||
+              err.message ||
+              String(e);
+          }
+        } else if (e instanceof Error) {
+          msg = e.message;
+        }
         setError(msg);
+        logToTerminal({ type: "auth_error", message: msg });
         throw new Error(msg);
       } finally {
         setLoading(false);
       }
     },
-    []
+    [logToTerminal]
   );
-
 
   // Cancel Pending Email
   const cancelPendingEmailFn = useCallback(async (): Promise<SimpleMessage> => {
@@ -424,6 +493,7 @@ function useProvideAuth(): AuthContextType {
     loading,
     error,
     pinVerified,
+    isSocketConnected,
     refreshUser,
     register,
     login,

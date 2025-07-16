@@ -6,7 +6,10 @@ import { motion } from "framer-motion";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useAuth } from "@/hooks/useAuth";
 import MycoCore from "@/agents/mycocore/Mycocore";
+import { initWebSocket } from "@/agents/mycocore/mycoSocket";
+
 import type { UserProfile } from "@/services/auth";
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,6 +17,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  initWebSocket(); // 👈 establishes real-time connection when dashboard loads
   const instanceId = React.useRef(Math.random().toString(36).slice(2, 10));
   React.useEffect(() => {
     console.log("[DEBUG] DashboardLayout mounted, id:", instanceId.current);
@@ -22,6 +26,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     };
   }, []);
 
+  
   const [activeTab, setActiveTab] = useState<string>("overview");
   const { user, logout, loading } = useAuth();
   const navigationUser = user as UserProfile | null;

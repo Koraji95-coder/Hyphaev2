@@ -1,9 +1,17 @@
 // src/agents/mycocore/MycoCore.tsx
+declare global {
+  interface Window {
+    MycoCoreEventBus: typeof MycoCoreEventBus;
+  }
+}
+if (typeof window !== "undefined") {
+  window.MycoCoreEventBus = MycoCoreEventBus;
+}
+
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import MycoCoreEventBus, { MycoCoreEvent, MycoCoreEventType } from "./eventBus";
+import MycoCoreEventBus, { MycoCoreEvent, MycoCoreEventType } from "@/agents/mycocore/eventBus";
 import { Terminal, Mail, AlertTriangle, Lock, Key, Download, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-
 type SystemEventType = MycoCoreEventType | "log";
 interface SystemEvent {
   id: string;
@@ -31,7 +39,7 @@ function toCSV(rows: SystemEvent[]): string {
 }
 
 export default function MycoCore() {
-  const { user } = useAuth();
+  const { user, isSocketConnected } = useAuth(); // 🔥 Connection status!
   const [log, setLog] = useState<SystemEvent[]>([]);
   const [minimized, setMinimized] = useState(false);
   const [search, setSearch] = useState("");
@@ -40,8 +48,7 @@ export default function MycoCore() {
 
   // Deduplication
   function isDuplicate(evt: MycoCoreEvent) {
-    const ts = evt.timestamp ? evt.timestamp.slice(0, 19) : '';
-    const key = `${evt.type}|${evt.message}|${ts}`;
+    const key = `${evt.type}|${evt.message}|${evt.timestamp}`;
     if (recentEventKeysRef.current.has(key)) return true;
     recentEventKeysRef.current.add(key);
     if (recentEventKeysRef.current.size > 100) {
@@ -148,9 +155,14 @@ export default function MycoCore() {
         onClick={() => setMinimized((v) => !v)}
       >
         <div className="flex items-center space-x-2">
-          <Terminal className="w-5 h-5 text-green-400" />
-          <span className="text-green-300 font-semibold">
+          <Terminal
+            className={`w-5 h-5 ${
+              isSocketConnected ? "text-green-400" : "text-red-400"
+            }`}
+          />
+          <span className={isSocketConnected ? "text-green-300 font-semibold" : "text-red-300 font-semibold"}>
             MycoCore AI{user ? ` — ${user.username}` : ""}
+            {!isSocketConnected && " (offline)"}
           </span>
         </div>
         <div className="flex items-center space-x-2">
@@ -178,6 +190,12 @@ export default function MycoCore() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
+          {!isSocketConnected && (
+            <div className="bg-red-950 border-b border-red-700 text-red-300 px-3 py-2 text-xs font-semibold">
+              <AlertTriangle className="inline w-4 h-4 mr-1" />
+              WebSocket Disconnected — Terminal is offline. Actions may not sync.
+            </div>
+          )}
           <div className="h-[calc(100%-5rem)] overflow-y-auto px-3 py-2 font-mono text-xs text-green-200">
             {filteredLog().length === 0 ? (
               <div className="text-green-600">No matching log entries.</div>

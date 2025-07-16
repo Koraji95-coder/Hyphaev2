@@ -9,11 +9,15 @@ import Button from "@/components/ui/Button";
 type EditingField = "username" | "email" | "password" | "pin" | null;
 
 // Strongly type log event keys for MycoCoreEventType
-const emit = (type: "auth_success" | "auth_error" | "username" | "email" | "password" | "pin", message: string) => {
+const emit = (
+  type: "auth_success" | "auth_error" | "username" | "email" | "password" | "pin",
+  message: string,
+  timestamp?: string
+) => {
   MycoCoreEventBus.emit({
     type,
     message,
-    timestamp: new Date().toISOString(),
+    timestamp: timestamp || new Date().toISOString(),
   });
 };
 
@@ -38,8 +42,7 @@ export default function ProfileSettings() {
     const channel = new BroadcastChannel("emailVerified");
     const handler = (ev: MessageEvent) => {
       if (ev.data === "verified") {
-        emit("email", "Email updated successfully.");
-        emit("auth_success", "✅ Email updated.");
+        emit("auth_success", "📧 Email updated successfully.");
         refreshUser(true).catch(() => {});
       }
     };
@@ -59,13 +62,18 @@ export default function ProfileSettings() {
             return;
         }
         try {
-            await changeUsername(clean);
-            const msg = `✅ Username changed to ${clean}`;
-            emit("username", msg);
+            await changeUsername(clean); // No need to assign to res if unused
+            emit("auth_success", `Username changed to ${clean}`);
 
-
-            await new Promise(res => setTimeout(res, 1000)); // <-- Try adding this
+            // Optionally wait for UI/DB sync if your UI needs it (rarely needed with React state!)
+            await new Promise(res => setTimeout(res, 1000));
             await refreshUser(true);
+
+            // If you want an explicit log for type "username" (for easier filtering)
+            emit("username", `Username changed to ${clean}`, new Date().toISOString());
+
+            // Only emit "auth_success" once unless you want duplicates!
+            // emit("auth_success", `Username changed to ${clean}`);
         } catch (err) {
             let msg = "Username update failed";
             const axiosErr = err as AxiosErrorLike;
@@ -86,15 +94,28 @@ export default function ProfileSettings() {
 
   // --- Email ---
   const handleEmailSave = async (newEmail: string) => {
+    const clean = newEmail.trim();
+    if (!clean || (clean === user?.email && !user?.pending_email)) {
+      emit("auth_error", "Your email is already set to that.");
+      setEditing(null);
+      return;
+    }
     try {
-      await changeEmail(newEmail);
-      emit("email", `Verification email sent to ${newEmail}. Please check your inbox.`);
-      emit("auth_success", "✅ Verification email sent to your new address. Please click the link to confirm.");
-        await refreshUser(true);
+        const res = await changeEmail(clean);
+        emit("email", res.message);
+        emit("auth_success", res.message);
+      await refreshUser(true);
     } catch (err) {
       let msg = "Email update failed";
       const axiosErr = err as AxiosErrorLike;
-      if (axiosErr.response?.data?.detail) msg = axiosErr.response.data.detail;
+      if (axiosErr.response?.status === 400) {
+        if (axiosErr.response.data?.detail === "Your email is already set to that.")
+          msg = "Your email is already set to that.";
+        else if (axiosErr.response.data?.detail)
+          msg = axiosErr.response.data.detail;
+      } else if (axiosErr.response?.data?.detail) {
+        msg = axiosErr.response.data.detail;
+      }
       emit("auth_error", msg);
     }
     setEditing(null);
