@@ -1,6 +1,6 @@
 // src/components/dashboard/panels/settings/ProfileSettings.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth, AxiosErrorLike } from "@/hooks/useAuth";
 import MycoCoreEventBus from "@/agents/mycocore/eventBus";
 import InlineEditField from "@/components/InlineEditField";
@@ -33,6 +33,23 @@ export default function ProfileSettings() {
   const [oldPin, setOldPin] = useState("");
   const [newPin, setNewPin] = useState("");
 
+  // Listen for email verification from other tabs
+  useEffect(() => {
+    const channel = new BroadcastChannel("emailVerified");
+    const handler = (ev: MessageEvent) => {
+      if (ev.data === "verified") {
+        emit("email", "Email updated successfully.");
+        emit("auth_success", "✅ Email updated.");
+        refreshUser(true).catch(() => {});
+      }
+    };
+    channel.addEventListener("message", handler);
+    return () => {
+      channel.removeEventListener("message", handler);
+      channel.close();
+    };
+  }, [refreshUser]);
+
   // --- Username ---
     const handleUsernameSave = async (newUsername: string) => {
         const clean = newUsername.trim();
@@ -45,8 +62,7 @@ export default function ProfileSettings() {
             await changeUsername(clean);
             const msg = `✅ Username changed to ${clean}`;
             emit("username", msg);
-            await new Promise(res => setTimeout(res, 1000)); // <-- Try adding this
-            await refreshUser();
+            await refreshUser(true);
         } catch (err) {
             let msg = "Username update failed";
             const axiosErr = err as AxiosErrorLike;
@@ -71,7 +87,7 @@ export default function ProfileSettings() {
       await changeEmail(newEmail);
       emit("email", `Verification email sent to ${newEmail}. Please check your inbox.`);
       emit("auth_success", "✅ Verification email sent to your new address. Please click the link to confirm.");
-      await refreshUser();
+        await refreshUser(true);
     } catch (err) {
       let msg = "Email update failed";
       const axiosErr = err as AxiosErrorLike;
@@ -86,7 +102,7 @@ export default function ProfileSettings() {
     try {
       await cancelPendingEmail();
       emit("email", "Pending email change cancelled.");
-      await refreshUser();
+        await refreshUser(true);
     } catch {
       emit("auth_error", "Could not cancel pending email.");
     }
@@ -99,7 +115,7 @@ export default function ProfileSettings() {
       await changePassword(oldPass, newPass);
       emit("password", "Password updated successfully.");
       emit("auth_success", "✅ Password changed.");
-      await refreshUser();
+        await refreshUser(true);
     } catch {
       emit("auth_error", "Password change failed.");
     }
@@ -115,7 +131,7 @@ export default function ProfileSettings() {
       await changePin(oldPin, newPin);
       emit("pin", "PIN updated successfully.");
       emit("auth_success", "✅ PIN changed.");
-      await refreshUser();
+        await refreshUser(true);
     } catch {
       emit("auth_error", "PIN change failed.");
     }
