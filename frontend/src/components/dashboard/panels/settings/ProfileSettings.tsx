@@ -1,6 +1,6 @@
 // src/components/dashboard/panels/settings/ProfileSettings.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth, AxiosErrorLike } from "@/hooks/useAuth";
 import MycoCoreEventBus from "@/agents/mycocore/eventBus";
 import InlineEditField from "@/components/InlineEditField";
@@ -33,6 +33,23 @@ export default function ProfileSettings() {
   const [oldPin, setOldPin] = useState("");
   const [newPin, setNewPin] = useState("");
 
+  // Listen for email verification from other tabs
+  useEffect(() => {
+    const channel = new BroadcastChannel("emailVerified");
+    const handler = (ev: MessageEvent) => {
+      if (ev.data === "verified") {
+        emit("email", "Email updated successfully.");
+        emit("auth_success", "✅ Email updated.");
+        refreshUser(true).catch(() => {});
+      }
+    };
+    channel.addEventListener("message", handler);
+    return () => {
+      channel.removeEventListener("message", handler);
+      channel.close();
+    };
+  }, [refreshUser]);
+
   // --- Username ---
     const handleUsernameSave = async (newUsername: string) => {
         const clean = newUsername.trim();
@@ -45,6 +62,8 @@ export default function ProfileSettings() {
             await changeUsername(clean);
             const msg = `✅ Username changed to ${clean}`;
             emit("username", msg);
+
+
             await new Promise(res => setTimeout(res, 1000)); // <-- Try adding this
             await refreshUser(true);
         } catch (err) {
