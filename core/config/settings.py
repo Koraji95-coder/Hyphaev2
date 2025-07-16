@@ -1,7 +1,6 @@
 # settings.py
 from pydantic_settings import BaseSettings
 from pydantic import Field
-from typing import Optional
 
 class Settings(BaseSettings):
     REDIS_URL: str
@@ -12,6 +11,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     FRONTEND_URL: str = "http://localhost:5173"
     JWT_SECRET: str = Field(..., env="JWT_SECRET")
+    IS_PROD: bool = Field(False, env="IS_PROD")
 
     # Pydantic V2 configuration using model_config
     model_config = {

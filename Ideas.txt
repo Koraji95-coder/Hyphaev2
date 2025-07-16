@@ -1,0 +1,2 @@
+//MOBILE USE
+//Scan note using camera that parses and automatically adds to sporelink memory vault. after app reads the note and processes it, the user can then add title, etc, and the app files it accordingly.

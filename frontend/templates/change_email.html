@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family:monospace; background:#000; color:#0f0; padding:2rem">
+    <h2 style="color:#0ff;">Hey {{ username }},</h2>
+    <p>
+      You requested to change your HyphaeOS email to
+      <strong>{{ new_email }}</strong>.
+      Please confirm by clicking the button below:
+    </p>
+    <p>
+      <a
+        href="{{ verify_link }}"
+        style="
+          display:inline-block;
+          background:#0f0;
+          color:#000;
+          padding:0.5rem 1rem;
+          text-decoration:none;
+          font-weight:bold;
+          border-radius:4px;
+        "
+      >
+        Confirm Email Change
+      </a>
+    </p>
+    <p style="margin-top:1rem;color:#555;">
+      If you didn’t request this change, please
+      secure your account and contact the developer immediately.
+    </p>
+    <br />
+    <p style="font-size:0.8em;color:#555;">— The HyphaeOS Team</p>
+  </body>
+</html>

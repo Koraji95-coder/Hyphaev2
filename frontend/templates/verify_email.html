@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family:monospace; background:#000; color:#0f0; padding:2rem">
+    <h2 style="color:#0ff;">Hey {{ username }},</h2>
+    <p>Thanks for signing up! Verify your email with this link:</p>
+    <p>
+      <a href="{{ verify_link }}" style="
+           display:inline-block;
+           background:#0f0;
+           color:#000;
+           padding:0.5rem 1rem;
+           text-decoration:none;
+           font-weight:bold;
+           border-radius:4px;
+         ">
+        Verify My Email
+      </a>
+    </p>
+    <p style="margin-top:1rem;color:#555;">
+      If you didn’t register, ignore this message.
+    </p>
+    <br/>
+    <p style="font-size:0.8em;color:#555;">— The HyphaeOS Team</p>
+  </body>
+</html>

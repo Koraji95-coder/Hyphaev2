@@ -1,9 +1,10 @@
 // src/routes/PrivateRoute.tsx
+import React from "react"; // ← Required for JSX in this file!
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 type PrivateRouteProps = {
-  children: JSX.Element;
+  children: React.ReactElement; // Use React.ReactElement for a single child
 };
 
 const PrivateRoute = ({ children }: PrivateRouteProps) => {

@@ -1,3 +1,4 @@
+//src/services/user.ts
 import { api } from "./api";
 
 // User profile (matches response_model=UserProfile)
@@ -5,6 +6,7 @@ export interface UserProfile {
   id: string;
   username: string;
   email: string;
+  pending_email?: string;
   role: string;
   verified: boolean;
   last_login?: string | null;

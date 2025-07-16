@@ -57,16 +57,24 @@ const MycelialLoginPanel: React.FC<MycelialLoginPanelProps> = ({ onSuccess }) =>
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-      try {
-     // login() will throw on failure, and set the auth header on success
-        await login(neuralId, synapticKey);
-        onSuccess(); // ✅ successful login
-      } catch (err: unknown) {
+    try {
+      console.log("Login attempt with:", { neuralId, synapticKey });
+      await login(neuralId, synapticKey);
+      setTerminalLines((prev) => [...prev, "✅ Link Established"]);
+      onSuccess();
+    } catch (err: unknown) {
+      console.error("Login error:", err);
       if (axios.isAxiosError(err)) {
-        const msg = err.response?.data?.detail || "Unknown error during link initiation.";
-        setTerminalLines(prev => [...prev, `❌ Link Failed: ${msg}`]);
+        const msg =
+          err.response?.status === 401
+            ? "Invalid Neural ID or Synaptic Key. Please try again."
+            : err.response?.data?.detail || "Unknown error during link initiation.";
+        setTerminalLines((prev) => [...prev, `❌ Link Failed: ${msg}`]);
       } else {
-        setTerminalLines(prev => [...prev, "❌ Link Failed: Unexpected system error."]);
+        setTerminalLines((prev) => [
+          ...prev,
+          "❌ Link Failed: Unexpected system error. Please try again.",
+        ]);
       }
     }
   };
@@ -126,104 +134,109 @@ const MycelialLoginPanel: React.FC<MycelialLoginPanelProps> = ({ onSuccess }) =>
   }, []);
 
   return (
-    <div className="min-h-screen w-full bg-black text-white font-mono flex flex-col items-center justify-center px-4">
-      <form
-        onSubmit={handleLogin}
-        className="w-full max-w-md border border-emerald-800 rounded-md bg-black px-6 py-8 space-y-6"
-      >
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-            HyphaeOS
-          </h1>
-          <p className="mt-1 text-sm tracking-widest text-cyan-400">
-            MYCELIAL NEURAL INTERFACE V.1.00
-          </p>
-        </div>
-
-        {/* Neural ID */}
-        <div className="space-y-1">
-          <label htmlFor="neuralId" className="text-emerald-400 flex items-center gap-2 uppercase text-xs">
-            <Sprout size={12} /> Neural ID
-          </label>
-          <input
-            id="neuralId"
-            type="text"
-            placeholder="Enter your neural identifier"
-            className="w-full px-4 py-2 bg-black border border-emerald-900 rounded-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-            value={neuralId}
-            onChange={(e) => setNeuralId(e.target.value)}
-          />
-        </div>
-
-        {/* Synaptic Key */}
-        <div className="space-y-1">
-          <label htmlFor="synapticKey" className="text-emerald-400 flex items-center gap-2 uppercase text-xs">
-            <Sprout size={12} /> Synaptic Key
-          </label>
-          <input
-            id="synapticKey"
-            type="password"
-            placeholder="Enter your synaptic passkey"
-            className="w-full px-4 py-2 bg-black border border-emerald-900 rounded-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-            value={synapticKey}
-            onChange={(e) => setSynapticKey(e.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between text-xs text-gray-400">
-          <Toggle
-            checked={preserveEcho}
-            onChange={handleToggle}
-            label="Persist Thoughtform"
-          />
-          <button
-            type="button"
-            onClick={() => navigate("/forgot-password")}
-            className="text-emerald-400 hover:underline cursor-pointer select-none bg-transparent"
-          >
-            Restore Neural Signature
-          </button>
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-emerald-500 hover:bg-emerald-400 text-black py-2 rounded-sm font-bold"
+      <div className="min-h-screen w-full bg-[#0b0f1a] flex flex-col items-center justify-center px-4">
+        {/* Glassy Panel */}
+        <form
+          onSubmit={handleLogin}
+          className="w-full max-w-md p-8 rounded-2xl bg-dark-300/70 backdrop-blur-xl shadow-2xl border border-cyan-400/10 flex flex-col gap-7"
         >
-          Awaken Link
-        </button>
+          {/* Branding */}
+          <div className="text-center mb-3">
+            <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-green-400 to-emerald-500 drop-shadow-[0_2px_8px_rgba(52,255,186,0.8)]">
+              HyphaeOS
+            </h1>
+            <p className="mt-1 text-base tracking-widest text-cyan-200 font-mono">MYCELIAL NEURAL INTERFACE</p>
+          </div>
 
-        <p className="text-center text-xs text-gray-500 select-none">
-          First connection?{' '}
+          {/* Neural ID Input */}
+          <div>
+            <label className="block text-cyan-300 uppercase text-xs mb-1 font-bold tracking-wide">
+              <Sprout size={13} className="inline-block mr-1 mb-1" />
+              Neural ID
+            </label>
+            <input
+              type="text"
+              autoFocus
+              className="w-full px-4 py-2 rounded-lg bg-dark-200/70 border border-cyan-800 text-cyan-100 placeholder-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+              placeholder="Enter your neural identifier"
+              value={neuralId}
+              onChange={e => setNeuralId(e.target.value)}
+            />
+          </div>
+
+          {/* Synaptic Key */}
+          <div>
+            <label className="block text-cyan-300 uppercase text-xs mb-1 font-bold tracking-wide">
+              <Sprout size={13} className="inline-block mr-1 mb-1" />
+              Synaptic Key
+            </label>
+            <input
+              type="password"
+              className="w-full px-4 py-2 rounded-lg bg-dark-200/70 border border-cyan-800 text-cyan-100 placeholder-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+              placeholder="Enter your synaptic passkey"
+              value={synapticKey}
+              onChange={e => setSynapticKey(e.target.value)}
+            />
+          </div>
+
+          {/* Toggle + Forgot */}
+          <div className="flex items-center justify-between text-xs text-cyan-400">
+            <Toggle
+              checked={preserveEcho}
+              onChange={handleToggle}
+              label="Persist Thoughtform"
+            />
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              className="text-cyan-300 hover:underline"
+            >
+              Restore Neural Signature
+            </button>
+          </div>
+
+          {/* Login Button */}
           <button
-            type="button"
-            onClick={() => navigate("/register")}
-            className="text-emerald-400 hover:underline cursor-pointer bg-transparent"
+            type="submit"
+            className="w-full py-3 rounded-lg bg-gradient-to-r from-cyan-400 via-green-400 to-emerald-400 text-black font-bold text-lg shadow-lg transition hover:brightness-110 focus:outline-none"
           >
-            Seed Mycelial Identity
+            Awaken Link
           </button>
-        </p>
-      </form>
 
-      <div
-        className="w-full max-w-md mt-6 p-4 bg-black border border-emerald-800 text-green-400 text-xs rounded-sm font-mono overflow-y-auto min-h-[160px] leading-relaxed"
-        ref={typingRef}
-      >
-        {terminalLines.map((line, index) => (
-          <p key={index}>{line}</p>
-        ))}
-        {typeof currentLine === 'string' && currentLine.length > 0 && (
-          <p>
-            {`> ${currentLine}`}
-            <span className="animate-pulse">█</span>
+          {/* Register Link */}
+          <p className="text-center text-xs text-cyan-500 mt-1 select-none">
+            First connection?{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/register")}
+              className="text-cyan-200 hover:underline"
+            >
+              Seed Mycelial Identity
+            </button>
           </p>
-        )}
-      </div>
+        </form>
 
-      <div className="mt-8 text-xs text-gray-600">
-        HyphaeOS © 2025 • Mycelial Core Instance 897.A.12
+        {/* Terminal Log */}
+        <div className="w-full max-w-md mt-7 px-5 py-4 rounded-lg bg-[#101525]/90 border border-cyan-400/20 shadow-inner text-[15px] font-mono text-green-300 overflow-y-auto min-h-[100px] max-h-48 leading-relaxed"
+          ref={typingRef}
+        >
+          {terminalLines.map((line, idx) => (
+            <div key={idx} className="whitespace-pre-wrap">{line}</div>
+          ))}
+          {currentLine && (
+            <div>
+              {`> ${currentLine}`}
+              <span className="animate-pulse text-cyan-300">█</span>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-7 text-xs text-cyan-800 tracking-wide">
+          HyphaeOS © 2025 • Mycelial Core Instance 897.A.12
+        </div>
       </div>
-    </div>
-  );
+    );
 };
 
 export default MycelialLoginPanel;

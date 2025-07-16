@@ -25,7 +25,7 @@ from core.routes.sporelink import router as sporelink_router
 from core.routes.verify import router as verify_router
 from core.routes.database import router as database_router
 from core.routes.plugins import router as plugins_router
-from core.routes.mycocore import router as mycocore_router
+from core.routes.mycocore import router as mycocore_router, start_metrics_task
 from core.routes.state import router as state_router
 from core.routes.agents import router as agents_router
 from core.routes.market import router as market_router
@@ -42,12 +42,17 @@ async def lifespan(app: FastAPI):
         logger.warning("Running without Redis cache")
     if not db_ok:
         logger.warning("Database unavailable; some features may not work")
-    task = asyncio.create_task(market_broadcast())
+
+    market_task  = asyncio.create_task(market_broadcast())
+    # fire off our system_metrics broadcast loop
+    metrics_task = start_metrics_task()
     yield
     # Shutdown
-    task.cancel()
+    market_task.cancel()  # Ensure market task is canceled
+    metrics_task.cancel()  # Ensure metrics task is canceled
     with suppress(Exception):
-        await task
+        await market_task
+        await metrics_task
     await close_redis()
     await close_db()
 

@@ -1,5 +1,7 @@
-import { Component, ErrorInfo, ReactNode } from "react";
+//components/ErrorBoundary.tsx
+import React, { Component, ErrorInfo, ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
+
 
 interface Props {
   children: ReactNode;

@@ -1,82 +1,76 @@
 // src/layouts/DashboardLayout.tsx
-import React, { useState, useEffect, useRef } from "react";               // ← added useEffect
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Navigation from "@/components/dashboard/panels/Navigation";
-import ParticleBackground from "@/components/ui/ParticleBackground";
 import { motion } from "framer-motion";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useAuth } from "@/hooks/useAuth";
-import { TerminalProvider, useTerminal } from "@/contexts/TerminalContext";  // ← added useTerminal
-import MycoCore from "@/agents/Mycocore";
-import type { AuthUser as User } from "@/services/auth";
+import MycoCore from "@/agents/mycocore/Mycocore";
+import type { UserProfile } from "@/services/auth";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  __debug?: string;
 }
 
-const BootLogger: React.FC = () => {
-  const { push } = useTerminal();
-  const ran = useRef(false);
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const instanceId = React.useRef(Math.random().toString(36).slice(2, 10));
+  React.useEffect(() => {
+    console.log("[DEBUG] DashboardLayout mounted, id:", instanceId.current);
+    return () => {
+      console.log("[DEBUG] DashboardLayout unmounted, id:", instanceId.current);
+    };
+  }, []);
+
+  const [activeTab, setActiveTab] = useState<string>("overview");
+  const { user, logout, loading } = useAuth();
+  const navigationUser = user as UserProfile | null;
+  const location = useLocation();
+
+  function handleLogout() {
+    if (user?.id != null) {
+      sessionStorage.removeItem(`mycocore-connected-${user.id}`);
+    }
+    logout();
+  }
 
   useEffect(() => {
-    if (ran.current) return;
-    ran.current = true;
-    push("Initializing Hyphae dashboard...");
-    const t1 = setTimeout(
-      () => push("Loading modules: Overview, Metrics, Weather"),
-      800
-    );
-    const t2 = setTimeout(() => push("System monitors active"), 1600);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [push]);
-  return null;
-};
-
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const { user, logout, loading } = useAuth();
-  const navigationUser = user as User | null;
+    const seg = location.pathname.split("/")[1] || "overview";
+    setActiveTab(seg);
+  }, [location.pathname]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black text-white font-mono">
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white font-mono">
         Loading…
       </div>
     );
   }
 
   return (
-    <TerminalProvider>
-      <BootLogger />
+    <motion.div
+      className="relative flex min-h-screen bg-gray-900 text-white font-mono"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      {/* Sidebar */}
+      <Navigation
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        user={navigationUser}
+        onLogout={handleLogout}
+      />
 
-      <motion.div
-        className="min-h-screen pb-40 bg-black text-white font-mono"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      >
-        <ParticleBackground variant="minimal" />
+      {/* Main content */}
+      <main className="flex-1 p-8 overflow-y-auto flex justify-center">
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </main>
 
-        <div className="flex h-full">
-          <Navigation
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            user={navigationUser}
-            onLogout={logout}
-          />
-          <main className="flex-1 p-8 overflow-y-auto">
-            <div className="max-w-4xl mx-auto border border-emerald-800 rounded-md bg-black px-6 py-8 shadow-lg">
-              <ErrorBoundary>{children}</ErrorBoundary>
-            </div>
-          </main>
-        </div>
-
-        {/* unified system/UI console + MycoCore events */}
+      <ErrorBoundary>
         <MycoCore />
-      </motion.div>
-    </TerminalProvider>
+      </ErrorBoundary>
+    </motion.div>
   );
 };
 

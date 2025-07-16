@@ -3,73 +3,75 @@ import { useState, useEffect, useCallback } from "react";
 import {
   getMycoCoreSnapshot,
   getMycoCoreAlerts,
+  MycoCoreSnapshot,
 } from "@/services/mycocore";
 import { useAgentStream } from "@/hooks/useAgentStream";
 
 export function useMycoCore() {
-  const [snapshot, setSnapshot] = useState<any>(null);
-  const [alerts,   setAlerts]   = useState<string[]>([]);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState<string | null>(null);
+  // Strict types!
+  const [snapshot, setSnapshot] = useState<MycoCoreSnapshot | null>(null);
+  const [alerts, setAlerts] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // subscribe to live events
-  const events = useAgentStream("/mycocore/stream");
+  // stream of *all* events from the server
+  const { events, isConnected, error: wsError } = useAgentStream("/mycocore/stream");
 
   const fetchSnapshot = useCallback(async () => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       const res = await getMycoCoreSnapshot();
       setSnapshot(res);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch snapshot");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
   }, []);
 
   const fetchAlerts = useCallback(async () => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       const res = await getMycoCoreAlerts();
-      setAlerts(res.alerts || []);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch alerts");
+      setAlerts(Array.isArray(res.alerts) ? res.alerts : []);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // on mount, load both
+  // initial load
   useEffect(() => {
     fetchSnapshot();
     fetchAlerts();
   }, [fetchSnapshot, fetchAlerts]);
 
-  // whenever a new WS event comes in, update snapshot or alerts
+  // React to WS *alerts* only
   useEffect(() => {
-    if (events.length === 0) return;
+    if (!isConnected || wsError || !events.length) return;
     const last = events[events.length - 1];
+    if (!last || typeof last !== "object") return;
 
     switch (last.type) {
-      case "snapshot":
-      case "metrics":
-        setSnapshot(last.data ?? last);
-        break;
       case "alerts":
-        setAlerts(last.data?.alerts ?? alerts);
+        setAlerts(Array.isArray(last.data?.alerts) ? last.data.alerts : alerts);
         break;
-      default:
-        break;
+      // system_metrics is ignored here by design
     }
-  }, [events]);
+  }, [events, isConnected, wsError, alerts]);
 
   return {
-    snapshot,
+    snapshot,        // you can still expose it, but it will not be updated by WS
     alerts,
     events,
     loading,
     error,
     fetchSnapshot,
     fetchAlerts,
+    isConnected,
+    wsError,
   };
 }

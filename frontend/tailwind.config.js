@@ -1,64 +1,55 @@
+// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
     './index.html',
-    './src/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx,jsx,js}',
+  ],
+  safelist: [
+    // Animation classes
+    'animate-spin', 
+    'animate-spin-slow',
+    'animate-pulse-slow',
   ],
   theme: {
     extend: {
       colors: {
-        dark: {
-          100: '#1f1f1f',
-          200: '#252525',
-          300: '#2b2b2b',
-          400: '#3f3f3f',
+        bg: '#0b0f1a',
+        surface: '#131924',
+        text: '#e0e6f0',
+        muted: '#7a869a',
+        primary: '#00f5d4',
+        secondary: '#38bdf8',
+        'accent-start': '#8aff80',
+        'accent-end': '#38bdf8',
+        success: '#32ff7e',
+        error: '#ff4b5c',
+      },
+      animation: {
+        'spin-slow': 'spin 8s linear infinite',
+        'pulse-slow': 'pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'glow': 'glow 2s ease-in-out infinite',
+      },
+      keyframes: {
+        spin: {
+          to: { transform: 'rotate(360deg)' },
         },
-        hyphae: {
-          300: '#c084fc',
-          400: '#a855f7',
-          500: '#9333ea',
-          600: '#7e22ce',
+        pulse: {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0.5 },
         },
-        spore: {
-          400: '#facc15',
-          500: '#eab308',
-          600: '#ca8a04',
+        glow: {
+          '0%, 100%': { filter: 'drop-shadow(0 0 6px #00f5d4)' },
+          '50%': { filter: 'drop-shadow(0 0 18px #00f5d4)' },
         },
-        fungal: {
-          300: '#fda4af',
-          400: '#fb7185',
-          500: '#f43f5e',
-        },
-        primary: {
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-        },
-        secondary: {
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-        },
-        accent: {
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-        },
-        success: {
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981',
-        },
-        warning: {
-          300: '#fde047',
-          400: '#facc15',
-          500: '#eab308',
-        },
-        error: {
-          300: '#fca5a5',
-          400: '#f87171',
-          500: '#ef4444',
-        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        mono: ['Menlo', 'monospace'],
+      },
+      borderRadius: {
+        xl: '1rem',
+        lg: '0.5rem',
       },
     },
   },

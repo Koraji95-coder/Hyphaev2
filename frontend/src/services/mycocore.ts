@@ -1,10 +1,10 @@
-//mycocore.ts
+// src/services/mycocore.ts
 
 import { api } from "./api";
 
-// Matches the backend Snapshot model
+// Matches backend Pydantic model
 export interface MycoCoreSnapshot {
-  status: string;
+  status: "ok";
   uptime: string;
   memory_usage: number;
   cpu_usage: number;
@@ -12,10 +12,10 @@ export interface MycoCoreSnapshot {
   safe_mode: boolean;
 }
 
-// Alerts result
+// Matches backend Pydantic model
 export interface MycoCoreAlerts {
   status: "ok" | "alert";
-  alerts: unknown[];       // Can type more strictly if you know alert shape
+  alerts: string[]; // updated to match backend
   timestamp: string;
 }
 
@@ -31,8 +31,8 @@ export async function getMycoCoreAlerts(): Promise<MycoCoreAlerts> {
   return res.data;
 }
 
-// 3. (Optional) Toggle safe mode (POST)
-export async function toggleSafeMode(): Promise<{ status: string; safe_mode: string }> {
-  const res = await api.post<{ status: string; safe_mode: string }>("/mycocore/safe-mode");
+// 3. (Optional) Toggle safe mode (POST, if implemented in backend)
+export async function toggleSafeMode(): Promise<{ status: string; safe_mode: boolean }> {
+  const res = await api.post<{ status: string; safe_mode: boolean }>("/mycocore/safe-mode");
   return res.data;
 }

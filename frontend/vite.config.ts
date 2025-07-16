@@ -9,18 +9,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  test: {
-    environment: 'jsdom',
-    globals: true,
-  },
   server: {
     proxy: {
+      // Proxy all /api requests (REST + WebSocket) to your FastAPI backend on :8000
       '/api': {
-        target: 'http://localhost:8000', // Your FastAPI backend
+        target: 'http://localhost:8000',
         changeOrigin: true,
+        secure: false,
         ws: true,
-        secure: false,                   // <-- allow HTTP / self-signed certs in dev
-        // rewrite: (path) => path.replace(/^\/api/, '/api'), // optional
       },
     },
   },
