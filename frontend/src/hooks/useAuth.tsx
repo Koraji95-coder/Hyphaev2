@@ -51,7 +51,7 @@ interface AuthContextType {
   pinVerified: boolean;
   
 
-  refreshUser: () => Promise<UserProfile>;
+  refreshUser: (silent?: boolean) => Promise<UserProfile>;
 
   register: (data: RegisterData) => Promise<UserProfile>;
   login: (username: string, password: string) => Promise<UserProfile>;
@@ -155,16 +155,19 @@ function useProvideAuth(): AuthContextType {
   const isValidToken = (t: string): boolean => t.split(".").length === 3;
 
   // Refresh user data
-  const refreshUser = useCallback(async (): Promise<UserProfile> => {
-    setLoading(true);
-    try {
-      const profile = await getProfile();
-      setUser(profile);
-      return profile;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const refreshUser = useCallback(
+    async (silent = false): Promise<UserProfile> => {
+      if (!silent) setLoading(true);
+      try {
+        const profile = await getProfile();
+        setUser(profile);
+        return profile;
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    []
+  );
 
   // Register
   const register = useCallback(

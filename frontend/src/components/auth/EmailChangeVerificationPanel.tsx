@@ -23,12 +23,12 @@ const EmailChangeVerificationPanel: React.FC = () => {
     }
 
     verifyEmailChange(token)
-      .then(async () => {
-        setSuccess(true);
-        setMessage("Email verified successfully! You may now close this tab.");
-        try {
-          await refreshUser();
-        } catch {/* ignore */}
+        .then(async () => {
+          setSuccess(true);
+          setMessage("Email verified successfully! You may now close this tab.");
+          try {
+            await refreshUser(true);
+          } catch {/* ignore */}
         // notify other tabs immediately
         const channel = new BroadcastChannel("emailVerified");
         channel.postMessage("verified");
