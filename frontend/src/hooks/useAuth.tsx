@@ -7,6 +7,7 @@ import React, {
   useCallback,
   ReactNode,
 } from "react";
+import { useLogTerminal } from "@/hooks/useLogTerminal";
 import { api } from "@/services/api";
 import type { UserProfile, SimpleMessage } from "@/services/auth";
 import {
@@ -51,7 +52,7 @@ interface AuthContextType {
   pinVerified: boolean;
   
 
-  refreshUser: () => Promise<UserProfile>;
+  refreshUser: (silent?: boolean) => Promise<UserProfile>;
 
   register: (data: RegisterData) => Promise<UserProfile>;
   login: (username: string, password: string) => Promise<UserProfile>;
@@ -93,6 +94,7 @@ function useProvideAuth(): AuthContextType {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [pinVerified, setPinVerified] = useState<boolean>(false);
+  const { logToTerminal } = useLogTerminal();
 
   // Initialize session on mount
   useEffect(() => {
@@ -155,16 +157,19 @@ function useProvideAuth(): AuthContextType {
   const isValidToken = (t: string): boolean => t.split(".").length === 3;
 
   // Refresh user data
-  const refreshUser = useCallback(async (): Promise<UserProfile> => {
-    setLoading(true);
-    try {
-      const profile = await getProfile();
-      setUser(profile);
-      return profile;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const refreshUser = useCallback(
+    async (silent = false): Promise<UserProfile> => {
+      if (!silent) setLoading(true);
+      try {
+        const profile = await getProfile();
+        setUser(profile);
+        return profile;
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    []
+  );
 
   // Register
   const register = useCallback(
@@ -315,62 +320,42 @@ function useProvideAuth(): AuthContextType {
       setError(null);
       setLoading(true);
       try {
-        console.log("useAuth - Attempting changeUsername"); // Log before the service call
         const res = await changeUsernameService(newUsername);
-        console.log("useAuth - changeUsername successful:", res); // Log on success
-
-        // Success logic: update user, broadcast, etc.
         setUser((prev) => (prev ? { ...prev, username: newUsername } : prev));
         const channel = new BroadcastChannel("usernameUpdates");
         channel.postMessage({ type: "usernameUpdated", newUsername });
         channel.close();
-        return res; // Return success message
+        logToTerminal({ type: "auth_success", message: "Username changed successfully" });
+        return res;
       } catch (e: unknown) {
-        console.error("useAuth - Caught error in changeUsername:", e); // Log the caught error
-
         let msg = "Unknown error";
         if (typeof e === "object" && e !== null && "response" in e) {
           const err = e as AxiosErrorLike;
-          console.log("useAuth - Axios error response:", err.response); // Log the Axios response
-
           if (err.response?.status === 400) {
-            console.log("useAuth - Status is 400"); // Log if status is 400
-            if (err.response.data?.detail === 'That is already your current username') {
-              console.log("useAuth - Matching specific username error detail"); // Log if detail matches
-              msg = 'That is already your current username'; // Or your preferred frontend message
-            } else if (err.response.data?.detail === 'Username already taken') {
-               console.log("useAuth - Matching 'Username already taken' detail"); // Log if taken
-               msg = 'Username already taken';
-            } else {
-              console.log("useAuth - 400 but not specific username or taken error"); // Log other 400s
-              msg = err.response?.data?.detail || err.response?.data?.message || 'Bad request.';
-            }
+            if (err.response.data?.detail === "That is already your current username")
+              msg = "That is already your current username";
+            else if (err.response.data?.detail === "Username already taken")
+              msg = "Username already taken";
+            else if (err.response.data?.detail) msg = err.response.data.detail;
+            else msg = err.response?.data?.message || "Bad request.";
           } else {
-            console.log("useAuth - Non-400 HTTP error or network error"); // Log other errors
             msg =
               err.response?.data?.detail ||
               err.response?.data?.message ||
               err.message ||
               String(e);
           }
-
         } else if (e instanceof Error) {
-           console.log("useAuth - Caught non-Axios Error:", e.message); // Log generic Error
-           msg = e.message;
+          msg = e.message;
         }
-
-         console.log("useAuth - Setting error state to:", msg); // Log the message being set
-         setError(msg); // Set the error state
-
-         console.log("useAuth - Re-throwing error:", msg); // Log before re-throwing
-         throw new Error(msg); // Re-throw the error
-
+        setError(msg);
+        logToTerminal({ type: "auth_error", message: msg });
+        throw new Error(msg);
       } finally {
-        console.log("useAuth - changeUsername finally block"); // Log finally block
-        setLoading(false); // Ensure loading state is reset
+        setLoading(false);
       }
     },
-    [] // Dependencies for useCallback (empty as it doesn't depend on props/state from outside)
+    [logToTerminal]
   );
 
 
